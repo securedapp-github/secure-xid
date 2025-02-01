@@ -3,6 +3,10 @@ import  Layout  from './components/Layout';
 import  SelectDocument  from './components/SelectDocument';
 import  VerifyDocument  from './components/VerifyDocument';
 import  UploadDocument  from './components/UploadDocument';
+import CameraAccessScreen from './components/CameraAccessScreen';
+import CameraReadyScreen from './components/CameraReadyScreen';
+import VerificationComplete from './components/VerificationComplete';
+import DarkUploadDocument from './components/DarkUploadDocument';
 
 function App() {
   const [step, setStep] = useState('select');
@@ -18,11 +22,20 @@ function App() {
   };
 
   return (
-    <Layout>
-      {step === 'select' && <SelectDocument onNext={handleNext} />}
-      {step === 'verify' && <VerifyDocument onNext={handleNext} onBack={handleBack} />}
-      {step === 'upload' && <UploadDocument onBack={handleBack} />}
-    </Layout>
+    <div>
+       <Layout>
+         {step === 'select' && <SelectDocument onNext={handleNext} />}
+         {step === 'verify' && <VerifyDocument onNext={handleNext} onBack={handleBack} />}
+         {step === 'upload' && <UploadDocument onBack={handleBack} />}
+       </Layout>
+    <div>
+    <CameraAccessScreen />
+    <CameraReadyScreen />
+    <VerificationComplete />
+    <DarkUploadDocument />
+</div>
+
+</div>
   );
 }
 

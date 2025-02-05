@@ -18,7 +18,8 @@ const documentTypes = [
   { id: 'passport', name: 'Passport' },
   { id: 'drivers_license', name: 'Driver\'s License' },
   { id: 'national_id', name: 'National ID Card' },
-  { id: 'residence_permit', name: 'Residence Permit' }
+  { id: 'residence_permit', name: 'Residence Permit' },
+  {id:"adhaar_card" , name:"Adhaar Card"}
 ];
 
 const SelectDocument = ({ onNext }) => {

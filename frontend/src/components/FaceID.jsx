@@ -72,6 +72,10 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
           );
   
           console.log("API Response:", response.data);
+          if (response.status === 201) {
+            navigate("/dashboard");
+          }
+          
         } catch (error) {
           console.error("Error uploading files:", error);
         }

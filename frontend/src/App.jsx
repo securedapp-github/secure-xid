@@ -7,9 +7,10 @@ import UploadDocument from "./components/UploadDocument";
 import Layout from "./components/Layout";
 import KycPage from "./pages/KycPage";
 import DashBoard from "./components/DashBoard";
-import DarkUploadDocument from "./components/DarkUploadDocument";
-import CameraAccessScreen from "./components/CameraAccessScreen";
-import CameraReadyScreen from "./components/CameraReadyScreen";
+
+// import DarkUploadDocument from "./components/DarkUploadDocument";
+// import CameraAccessScreen from "./components/CameraAccessScreen";
+// import CameraReadyScreen from "./components/CameraReadyScreen";
 const App = () => {
   return (
     <Router>
@@ -22,6 +23,7 @@ const App = () => {
       
         <Route path="/kyc" element={<KycPage />} />
         <Route path="/dashboard" element={<DashBoard />} />
+        
 
         {/* Redirect unknown routes to login */}
         <Route path="*" element={<Navigate to="/" />} />

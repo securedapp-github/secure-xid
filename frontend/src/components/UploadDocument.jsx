@@ -5,7 +5,7 @@ const UploadDocument = ({ onBack, onNext, onFileUpload }) => {
   const [frontFile, setFrontFile] = useState(null);
   const [backFile, setBackFile] = useState(null);
   const [isFileUploaded, setIsFileUploaded] = useState(false);
-
+ 
   // Handle front file change
   const handleFrontFileChange = (e) => {
     const file = e.target.files[0];
@@ -35,15 +35,15 @@ const UploadDocument = ({ onBack, onNext, onFileUpload }) => {
   }, [frontFile, backFile]);
 
   return (
-    <div>
-      <div className="flex items-center gap-4 mb-8">
+    <div className="max-w-lg mx-auto p-4 sm:p-6 md:p-8 bg-white shadow-lg rounded-lg">
+      <div className="flex items-center gap-4 mb-6 sm:mb-8">
         <button 
           onClick={onBack}
           className="p-2 rounded-full bg-gray-100"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <h2 className="text-2xl font-semibold">Document type</h2>
+        <h2 className="text-xl sm:text-2xl font-semibold">Document type</h2>
       </div>
       
       <div className="space-y-6">
@@ -51,49 +51,51 @@ const UploadDocument = ({ onBack, onNext, onFileUpload }) => {
           <p className="font-medium mb-4">Identity document</p>
           
           <div className="space-y-4">
-            <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center">
+            <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 sm:p-6 text-center">
               <div className="flex justify-center mb-4">
-                <Upload className="w-6 h-6 text-gray-400" />
+                <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
               </div>
-              <p className="font-medium mb-1">Front side</p>
-              <p className="text-sm text-gray-500">Choose or drag and drop</p>
+              <p className="font-medium mb-1 text-sm sm:text-base">Front side</p>
+              <p className="text-xs sm:text-sm text-gray-500">Choose or drag and drop</p>
               {/* File input for Front side */}
               <input
                 type="file"
                 accept="image/jpeg, image/png"
                 onChange={handleFrontFileChange}
-                className="mt-2 p-2 border border-gray-300 rounded-md"
+                className="mt-2 p-2 border border-gray-300 rounded-md w-full"
               />
             </div>
 
-            <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center">
+            <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 sm:p-6 text-center">
               <div className="flex justify-center mb-4">
-                <Upload className="w-6 h-6 text-gray-400" />
+                <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
               </div>
-              <p className="font-medium mb-1">Back side</p>
-              <p className="text-sm text-gray-500">Choose or drag and drop</p>
+              <p className="font-medium mb-1 text-sm sm:text-base">Back side</p>
+              <p className="text-xs sm:text-sm text-gray-500">Choose or drag and drop</p>
               {/* File input for Back side */}
               <input
                 type="file"
                 accept="image/jpeg, image/png"
                 onChange={handleBackFileChange}
-                className="mt-2 p-2 border border-gray-300 rounded-md"
+                className="mt-2 p-2 border border-gray-300 rounded-md w-full"
               />
             </div>
           </div>
 
-          <p className="text-sm text-gray-500 mt-4">JPG, PNG, HEIC or PDF (max 50mb)</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-4">JPG, PNG, HEIC or PDF (max 50mb)</p>
         </div>
 
         {/* Disable Continue button if both files are not uploaded */}
         <button 
           onClick={onNext}  // Proceed to next step if both files are uploaded
-          className={`w-full bg-[#0066CC] text-white py-3 px-6 rounded-lg font-medium ${isFileUploaded ? '' : 'opacity-50 cursor-not-allowed'}`}
+          className={`w-full bg-[#0066CC] text-white py-2 sm:py-3 px-6 rounded-lg font-medium ${isFileUploaded ? '' : 'opacity-50 cursor-not-allowed'}`}
           disabled={!isFileUploaded}  // Disable button if files are not uploaded
         >
           Continue
         </button>
+       
       </div>
+      
     </div>
   );
 }

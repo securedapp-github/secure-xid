@@ -1,6 +1,6 @@
 import React from 'react';
 import { Shield } from 'lucide-react';
-
+import logo from "../assets/logosecuredapp.png"
 const Layout = ({ children }) => {
   return (
     <div className="min-h-screen bg-[#FAFAFA] p-4 sm:p-8">
@@ -23,7 +23,7 @@ const Layout = ({ children }) => {
               Don't risk compliance gaps—streamline verification, detect fraud, and mitigate risk effortlessly. Start securing your business today.
             </p>
             <div className="flex items-center justify-center lg:justify-start gap-2">
-              <Shield className="w-6 sm:w-8 h-6 sm:h-8 text-[#00FF85]" />
+              <img src={logo} className='w-20'></img>
               <span className="font-semibold">SecureDapp</span>
             </div>
           </div>

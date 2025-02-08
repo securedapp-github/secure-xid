@@ -1,0 +1,81 @@
+.app-container {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    max-width: 1200px;
+    margin: auto;
+  }
+  
+  .analysis-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  
+  .analysis-card {
+    flex: 1;
+    min-width: 300px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background: #f9f9f9;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .analysis-card label {
+    display: block;
+    margin-bottom: 10px;
+  }
+  
+  .analysis-card select,
+  .analysis-card input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  
+  .analysis-card button {
+    padding: 10px 20px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+  .analysis-card button:hover {
+    background: #0056b3;
+  }
+  
+  .aggregate-container {
+    margin-top: 30px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background: #eaf4fc;
+  }
+  
+  .aggregate-container button {
+    margin-bottom: 15px;
+    padding: 10px 20px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+  .aggregate-container button:hover {
+    background: #1e7e34;
+  }
+  
+  @media (max-width: 768px) {
+    .analysis-container {
+      flex-direction: column;
+    }
+  }
+  

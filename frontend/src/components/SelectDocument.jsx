@@ -50,8 +50,7 @@ const countries = [
 const allDocumentTypes = [
   { id: 'passport', name: 'Passport' },
   { id: 'drivers_license', name: "Driver's License" },
-  { id: 'national_id', name: 'National ID Card' },
-  { id: 'residence_permit', name: 'Residence Permit' },
+ 
   { id: 'adhaar_card', name: 'Adhaar Card' }
 ];
 
@@ -68,7 +67,7 @@ const SelectDocument = ({ onNext }) => {
 
   // Filter document types based on selected country
   const filteredDocuments = country === 'IN' 
-    ? allDocumentTypes.filter(doc => doc.id === 'drivers_license' || doc.id === 'adhaar_card') 
+    ? allDocumentTypes.filter(doc => doc.id === 'drivers_license' || doc.id === 'adhaar_card' ||  doc.id==="passport") 
     : allDocumentTypes.filter(doc => doc.id !== 'adhaar_card');
 
   return (

@@ -151,18 +151,18 @@ const AuthPage = () => {
         SECURE<span className="text-[#00FF85]">X</span>-ID
       </header>
 
-      {/* Auth Card */}
-      <div className="w-full max-w-3xl bg-white rounded-lg shadow-lg p-8 flex flex-col sm:flex-row">
+      {/* Auth Card - Wider than before */}
+      <div className="w-full max-w-7xl bg-white rounded-lg shadow-lg p-12 flex flex-col sm:flex-row">
         {/* Left Side */}
         <div className="w-full sm:w-1/3 flex flex-col justify-center items-center sm:items-start">
-          <h2 className="text-xl font-semibold">Realtime Aml</h2>
+          <h2 className="text-xl font-semibold">Realtime Aml Security</h2>
           <p className="text-blue-500 mt-2 cursor-pointer" onClick={() => setIsLogin(false)}>
             Create Account
           </p>
         </div>
 
         {/* Right Side (Form) */}
-        <div className="w-full sm:w-2/3">{isLogin ? <Login toggleForm={() => setIsLogin(false)} /> : <Signup toggleForm={() => setIsLogin(true)} />}</div>
+        <div className="w-full sm:w-2/3 ">{isLogin ? <Login toggleForm={() => setIsLogin(false)} /> : <Signup toggleForm={() => setIsLogin(true)} />}</div>
       </div>
 
       {/* SecureDApp Logo */}

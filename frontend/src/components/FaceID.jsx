@@ -73,14 +73,14 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
   const handleSubmit = async () => {
     const token = localStorage.getItem("authToken");
     if (!token) {
-      toast.error("No token found, please log in.");
+      setTimeout(() => toast.error("No token found, please log in."), 100);
       return;
     }
     try {
       const decodedToken = jwtDecode(token);
       const userId = decodedToken?.user_id;
       if (!userId) {
-        toast.error("User ID not found in token.");
+        setTimeout(() => toast.error("User ID not found in token."), 100);
         return;
       }
       if (frontFile && backFile && imageSrc) {
@@ -89,7 +89,7 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
         formData.append("front_id", frontFile);
         formData.append("back_id", backFile);
         formData.append("selfie_with_id", dataURItoBlob(imageSrc));
-
+  
         try {
           const response = await axios.post(
             "https://8082-38-137-52-117.ngrok-free.app/upload-kyc",
@@ -101,27 +101,28 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
               },
             }
           );
-
+  
           if (response.status === 201) {
-            toast.success("✅ Your documents have been submitted successfully!");
+            setTimeout(() => toast.success("✅ Your documents have been submitted successfully!"), 100);
             navigate("/dashboard");
           }
         } catch (error) {
           console.error("Error uploading files:", error);
-          toast.error("❌ Your documents could not be submitted. Please try again.");
+          setTimeout(() => toast.error("❌ Your documents could not be submitted. Please try again."), 100);
         }
       } else {
-        toast.warning("⚠️ Please upload all required images.");
+        setTimeout(() => toast.warning("⚠️ Please upload all required images."), 100);
       }
     } catch (error) {
       console.error("Invalid token format:", error);
-      toast.error("⚠️ Invalid token. Please log in again.");
+      setTimeout(() => toast.error("⚠️ Invalid token. Please log in again."), 100);
     }
   };
+  
 
   return (
     <div className="max-w-lg mx-auto p-6 bg-white shadow-md rounded-lg text-center">
-      <ToastContainer /> {/* ✅ Add ToastContainer to render notifications */}
+    <ToastContainer />
       <h2 className="text-2xl font-semibold mb-4">Capture Your Photo</h2>
       <div className="relative w-full h-64 border border-gray-300 rounded-lg overflow-hidden">
         <Webcam

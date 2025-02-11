@@ -10,8 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@rainbow-me/rainbowkit": "^2.2.3",
     "@tailwindcss/vite": "^4.0.1",
     "axios": "^1.7.9",
+    "ethers": "^6.13.5",
     "face-api.js": "^0.22.2",
     "file-saver": "^2.0.5",
     "jwt-decode": "^4.0.0",
@@ -22,7 +24,8 @@
     "react-router-dom": "^7.1.5",
     "react-toastify": "^11.0.3",
     "react-webcam": "^7.2.0",
-    "tailwindcss": "^4.0.1"
+    "tailwindcss": "^4.0.1",
+    "wagmi": "^2.14.11"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

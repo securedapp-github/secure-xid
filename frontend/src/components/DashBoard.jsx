@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import  "./DashBoard.css"
+
 const DashBoard = () => {
   // States for customer risk analysis
   const [selectedOccupation, setSelectedOccupation] = useState("");

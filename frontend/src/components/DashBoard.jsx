@@ -20,6 +20,13 @@ const DashBoard = () => {
 
   // State for the aggregated result
   const [aggregateScore, setAggregateScore] = useState(null);
+  //new risk scoring
+  const [transactionFrequency, setTransactionFrequency] = useState("");
+  const [amountVariance, setAmountVariance] = useState("");
+  const [timeGapConsistency, setTimeGapConsistency] = useState("");
+  const [transactionDirection, setTransactionDirection] = useState("");
+  const [crossWalletBehavior, setCrossWalletBehavior] = useState("");
+  const [circularTransactionVolume, setCircularTransactionVolume] = useState("");
 
   // Data for scoring
   const countries = {
@@ -290,15 +297,34 @@ const DashBoard = () => {
     setBehavioralRiskScore(behaviorScore);
   };
 
+  const calculateNewRiskScores = () => {
+    const frequencyScore = transactionFrequency === "high" ? 30 : transactionFrequency === "medium" ? 20 : 10;
+    const varianceScore = amountVariance === "high" ? 30 : amountVariance === "medium" ? 20 : 10;
+    const timeGapScore = timeGapConsistency === "high" ? 30 : timeGapConsistency === "medium" ? 20 : 10;
+    const directionScore = transactionDirection === "high" ? 30 : transactionDirection === "medium" ? 20 : 10;
+    const crossWalletScore = crossWalletBehavior === "high" ? 30 : crossWalletBehavior === "medium" ? 20 : 10;
+    const circularVolumeScore = circularTransactionVolume === "high" ? 30 : circularTransactionVolume === "medium" ? 20 : 10;
+
+    return {
+      frequencyScore,
+      varianceScore,
+      timeGapScore,
+      directionScore,
+      crossWalletScore,
+      circularVolumeScore,
+    };
+  };
+
   // Aggregate Results
   const aggregateResults = () => {
     const scores = [
       { score: transactionRiskScore, weight: 0.5 },
-      { score: customerRiskScore, weight: 0.3 },
-      { score: behavioralRiskScore, weight: 0.2 },
+      { score: customerRiskScore, weight: 0.2 },
+      { score: behavioralRiskScore, weight: 0.3 },
+      ...Object.values(calculateNewRiskScores()).map(score => ({ score, weight: 0.1 })),
     ].filter((entry) => entry.score !== null);
 
-    if (scores.length === 3) {
+    if (scores.length === 9) {
       const weightedScore = scores.reduce(
         (sum, { score, weight }) => sum + score * weight,
         0
@@ -323,155 +349,235 @@ const DashBoard = () => {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] p-4 sm:p-8">
-    <header className="mb-8 text-center sm:text-left">
+      <header className="mb-8 text-center sm:text-left">
         <div className="flex justify-center sm:justify-start items-center">
           <span className="text-2xl font-bold">
             SECURE<span className="text-[#00FF85]">X</span>-ID
           </span>
         </div>
+        
       </header>
-    <div className="app-container">
-      <h1>Risk Scoring Model</h1>
-      <div className="analysis-container">
-        {/* Customer Risk Analysis Section */}
-        <div className="analysis-card">
-          <h2>Customer Risk Analysis</h2>
-          <label>
-            Country:
-            <input
-              type="text"
-              value={selectedCountry}
-              onChange={handleCountrySearch}
-              placeholder="Search country"
-            />
-          </label>
-          {filteredCountries.length > 0 && (
-            <ul className="autocomplete-list">
-              {filteredCountries.map((country) => (
-                <li
-                  key={country}
-                  onClick={() => {
-                    setSelectedCountry(country);
-                    setFilteredCountries([]);
-                  }}
-                >
-                  {country}
-                </li>
-              ))}
-            </ul>
-          )}
-          <label>
-            Occupation:
-            <select
-              value={selectedOccupation}
-              onChange={(e) => setSelectedOccupation(e.target.value)}
-            >
-              <option value="">Select an Occupation</option>
-              {Object.keys(occupations).map((occupation) => (
-                <option key={occupation} value={occupation}>
-                  {occupation}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            KYC Status:
-            <select
-              value={kycStatus}
-              onChange={(e) => setKycStatus(e.target.value)}
-            >
-              <option value="">Select KYC Status</option>
-              {Object.keys(kycScores).map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button onClick={calculateCustomerRiskScore}>
-            Calculate Customer Risk Score
-          </button>
-          {customerRiskScore !== null && (
-            <p>Customer Risk Score: {customerRiskScore.toFixed(2)}</p>
-          )}
-        </div>
+      <div className="app-container">
+        <h1>Risk Scoring Model</h1>
+        <div className="analysis-container">
+          {/* Customer Risk Analysis Section */}
+          <div className="analysis-card">
+            <h2>Customer Risk Analysis</h2>
+            <label>
+              Country:
+              <input
+                type="text"
+                value={selectedCountry}
+                onChange={handleCountrySearch}
+                placeholder="Search country"
+              />
+            </label>
+            {filteredCountries.length > 0 && (
+              <ul className="autocomplete-list">
+                {filteredCountries.map((country) => (
+                  <li
+                    key={country}
+                    onClick={() => {
+                      setSelectedCountry(country);
+                      setFilteredCountries([]);
+                    }}
+                  >
+                    {country}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <label>
+              Occupation:
+              <select
+                value={selectedOccupation}
+                onChange={(e) => setSelectedOccupation(e.target.value)}
+              >
+                <option value="">Select an Occupation</option>
+                {Object.keys(occupations).map((occupation) => (
+                  <option key={occupation} value={occupation}>
+                    {occupation}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              KYC Status:
+              <select
+                value={kycStatus}
+                onChange={(e) => setKycStatus(e.target.value)}
+              >
+                <option value="">Select KYC Status</option>
+                {Object.keys(kycScores).map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button onClick={calculateCustomerRiskScore}>
+              Calculate Customer Risk Score
+            </button>
+            {customerRiskScore !== null && (
+              <p>Customer Risk Score: {customerRiskScore.toFixed(2)}</p>
+            )}
+          </div>
 
-        {/* Transaction Analysis Section */}
-        <div className="analysis-card">
-          <h2>Transaction Analysis</h2>
-          <label>
+          {/* Transaction Analysis Section */}
+          <div className="analysis-card">
+            <h2>Transaction Analysis</h2>
+            <label>
             Annual Income Range:
-            <select
-              value={annualIncomeRange}
-              onChange={(e) => setAnnualIncomeRange(e.target.value)}
-            >
-              <option value="">Select an Income Range</option>
-              {Object.keys(incomeRanges).map((range) => (
-                <option key={range} value={range}>
-                  {range}
-                </option>
-              ))}
-            </select>
-          </label>
-          {transactionThreshold !== null && (
+              <select
+                value={annualIncomeRange}
+                onChange={(e) => setAnnualIncomeRange(e.target.value)}
+              >
+                <option value="">Select an Income Range</option>
+                {Object.keys(incomeRanges).map((range) => (
+                  <option key={range} value={range}>
+                    {range}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {transactionThreshold !== null && (
               <p>Calculated Threshold: {transactionThreshold.toFixed(2)}</p>
             )}
-          <label>
-            Transaction Value:
-            <input
-              type="number"
-              value={transactionValue}
-              onChange={(e) => setTransactionValue(e.target.value)}
-              placeholder="Enter transaction value"
-            />
-          </label>
-          <button onClick={calculateTransactionRiskScore}>
-            Calculate Transaction Risk Score
-          </button>
-          {transactionRiskScore !== null && (
-            <p>Transaction Risk Score: {transactionRiskScore}</p>
-          )}
-        </div>
+            <label>
+              Transaction Value:
+              <input
+                type="number"
+                value={transactionValue}
+                onChange={(e) => setTransactionValue(e.target.value)}
+                placeholder="Enter transaction value"
+              />
+            </label>
+            <button onClick={calculateTransactionRiskScore}>
+              Calculate Transaction Risk Score
+            </button>
+            {transactionRiskScore !== null && (
+              <p>Transaction Risk Score: {transactionRiskScore}</p>
+            )}
+          </div>
 
-        {/* Transaction Behavioral Analysis Section */}
-        <div className="analysis-card">
-          <h2>Behavioral Analysis</h2>
-          <label>
-            Transaction Behavior:
-            <select
-              value={transactionBehavior}
-              onChange={(e) => setTransactionBehavior(e.target.value)}
-            >
-              <option value="">Select a Behavior</option>
-              {Object.keys(behaviorScores).map((behavior) => (
-                <option key={behavior} value={behavior}>
-                  {behavior}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button onClick={calculateBehavioralRiskScore}>
-            Calculate Behavioral Risk Score
-          </button>
-          {behavioralRiskScore !== null && (
-            <p>Behavioral Risk Score: {behavioralRiskScore}</p>
-          )}
-        </div>
+          {/* Transaction Behavioral Analysis Section */}
+          <div className="analysis-card">
+            <h2>Behavioral Analysis</h2>
+            <label>
+              Transaction Behavior:
+              <select
+                value={transactionBehavior}
+                onChange={(e) => setTransactionBehavior(e.target.value)}
+              >
+                <option value="">Select a Behavior</option>
+                {Object.keys(behaviorScores).map((behavior) => (
+                  <option key={behavior} value={behavior}>
+                    {behavior}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button onClick={calculateBehavioralRiskScore}>
+              Calculate Behavioral Risk Score
+            </button>
+            {behavioralRiskScore !== null && (
+              <p>Behavioral Risk Score: {behavioralRiskScore}</p>
+            )}
+          </div>
 
-        {/* Aggregate Results Section */}
-        <div className="analysis-card">
-          <h2>X-ID Results</h2>
-          <button onClick={aggregateResults}>Get X-ID Result</button>
-          {aggregateScore !== null && (
-            <div>
-              <p>X-ID Score: {aggregateScore.toFixed(2)}</p>
-              <p>{getQuote(aggregateScore)}</p>
-            </div>
-          )}
+          <div className="analysis-card">
+            <h2>Additional Risk Scoring Criteria</h2>
+            <label>
+              Frequency of Transactions with the Same Wallet:
+              <select
+                value={transactionFrequency}
+                onChange={(e) => setTransactionFrequency(e.target.value)}
+              >
+                <option value="">Select Frequency</option>
+                <option value="high">High Risk (3 pts)</option>
+                <option value="medium">Medium Risk (2 pts)</option>
+                <option value="low">Low Risk (1 pt)</option>
+              </select>
+            </label>
+            <label>
+              Transaction Amount Variance:
+              <select
+                value={amountVariance}
+                onChange={(e) => setAmountVariance(e.target.value)}
+              >
+                <option value="">Select Variance</option>
+                <option value="high">High Risk (3 pts)</option>
+                <option value="medium">Medium Risk (2 pts)</option>
+                <option value="low">Low Risk (1 pt)</option>
+              </select>
+            </label>
+            <label>
+              Time Gap Consistency:
+              <select
+                value={timeGapConsistency}
+                onChange={(e) => setTimeGapConsistency(e.target.value)}
+              >
+                <option value="">Select Consistency</option>
+                <option value="high">High Risk (3 pts)</option>
+                <option value="medium">Medium Risk (2 pts)</option>
+                <option value="low">Low Risk (1 pt)</option>
+              </select>
+            </label>
+            <label>
+              Direction of Transactions:
+              <select
+                value={transactionDirection}
+                onChange={(e) => setTransactionDirection(e.target.value)}
+              >
+                <option value="">Select Direction</option>
+                <option value="high">High Risk (3 pts)</option>
+                <option value="medium">Medium Risk (2 pts)</option>
+                <option value="low">Low Risk (1 pt)</option>
+              </select>
+            </label>
+            <label>
+              Cross-Wallet Behavior:
+              <select
+                value={crossWalletBehavior}
+                onChange={(e) => setCrossWalletBehavior(e.target.value)}
+              >
+                <option value="">Select Behavior</option>
+                <option value="high">High Risk (3 pts)</option>
+                <option value="medium">Medium Risk (2 pts)</option>
+                <option value="low">Low Risk (1 pt)</option>
+              </select>
+            </label>
+            <label>
+              Circular Transaction Volume:
+              <select
+                value={circularTransactionVolume}
+                onChange={(e) => setCircularTransactionVolume(e.target.value)}
+              >
+                <option value="">Select Volume</option>
+                <option value="high">High Risk (3 pts)</option>
+                <option value="medium">Medium Risk (2 pts)</option>
+                <option value="low">Low Risk (1 pt)</option>
+              </select>
+            </label>
+          </div>
+
+            {/* Aggregate Results Section */}
+            <div className="analysis-card">
+            <h2>X-ID Results</h2>
+            <button onClick={aggregateResults}>Get X-ID Result</button>
+            {aggregateScore !== null && (
+              <div>
+                <p>X-ID Score: {aggregateScore.toFixed(2)}</p>
+                <p>{getQuote(aggregateScore)}</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
-    </div>
+
+            
+            
   );
 };
 

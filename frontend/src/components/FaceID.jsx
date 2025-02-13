@@ -6,52 +6,21 @@ import { useNavigate } from "react-router-dom";
 import * as faceapi from "face-api.js";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import WalletConnectButton from "./WalletConnectButton";
 
 const FaceId = ({ onBack, frontFile, backFile }) => {
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
   const [imageSrc, setImageSrc] = useState(null);
   const [isPhotoConfirmed, setIsPhotoConfirmed] = useState(false);
-  const [faceDetected, setFaceDetected] = useState(false);
-  const [modelsLoaded, setModelsLoaded] = useState(false);
+
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const loadModels = async () => {
-      try {
-        await faceapi.nets.ssdMobilenetv1.loadFromUri("/models");
-        await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
-        await faceapi.nets.faceRecognitionNet.loadFromUri("/models");
 
-        setModelsLoaded(true);
-        console.log("Models loaded successfully");
-      } catch (error) {
-        console.error("Error loading face-api models:", error);
-      }
-    };
 
-    loadModels();
-  }, []);
+  
 
-  useEffect(() => {
-    if (modelsLoaded && webcamRef.current) {
-      const interval = setInterval(() => {
-        if (webcamRef.current && webcamRef.current.video.readyState === 4) {
-          detectFace();
-        }
-      }, 100);
-      return () => clearInterval(interval);
-    }
-  }, [modelsLoaded]);
-
-  const detectFace = async () => {
-    const detections = await faceapi
-      .detectAllFaces(webcamRef.current.video)
-      .withFaceLandmarks()
-      .withFaceDescriptors();
-
-    setFaceDetected(detections.length > 0);
-  };
+ 
 
   const capture = () => {
     const imageSrc = webcamRef.current.getScreenshot();
@@ -72,6 +41,7 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
 
   const handleSubmit = async () => {
     const token = localStorage.getItem("authToken");
+    const walletAddress = localStorage.getItem("walletAddress");
     if (!token) {
       setTimeout(() => toast.error("No token found, please log in."), 100);
       return;
@@ -89,6 +59,7 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
         formData.append("front_id", frontFile);
         formData.append("back_id", backFile);
         formData.append("selfie_with_id", dataURItoBlob(imageSrc));
+        formData.append("wallet_address", walletAddress);
   
         try {
           const response = await axios.post(
@@ -132,13 +103,7 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
           className="w-full h-full"
         />
         <canvas ref={canvasRef} className="absolute inset-0"></canvas>
-        {faceDetected && (
-          <div className="absolute inset-0 flex justify-center items-center">
-            <div className="border-4 border-blue-500 rounded-full w-32 h-48 flex justify-center items-center">
-              <span className="text-white">Align Face</span>
-            </div>
-          </div>
-        )}
+        
         <button
           onClick={capture}
           className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600"
@@ -177,6 +142,9 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
           )}
         </div>
       )}
+      <div className="p-2">
+      <WalletConnectButton />
+      </div>
       <div className="flex justify-between mt-6">
         <button
           onClick={onBack}
@@ -184,6 +152,7 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
         >
           Back
         </button>
+        
         <button
           onClick={handleSubmit}
           className="bg-blue-500 text-white py-2 px-6 rounded-lg hover:bg-blue-600"

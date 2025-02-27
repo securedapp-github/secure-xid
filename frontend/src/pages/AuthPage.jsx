@@ -24,7 +24,7 @@ const Signup = ({ toggleForm }) => {
     e.preventDefault();
     try {
       const response = await fetch(
-        "https://8082-38-137-52-117.ngrok-free.app/signup",
+        "https://89ef-38-183-11-215.ngrok-free.app/signup",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -46,7 +46,7 @@ const Signup = ({ toggleForm }) => {
   const handleVerifyOtp = async () => {
     try {
       const response = await fetch(
-        "https://8082-38-137-52-117.ngrok-free.app/verify-otp",
+        "https://89ef-38-183-11-215.ngrok-free.app/verify-otp",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -101,7 +101,7 @@ const Login = ({ toggleForm }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("https://8082-38-137-52-117.ngrok-free.app/login", {
+      const response = await fetch("https://89ef-38-183-11-215.ngrok-free.app/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -171,7 +171,7 @@ const AuthPage = () => {
         <p className="font-semibold text-lg">SecureDApp</p>
       </div>
     </div>
-  );
+  ); 
 };
 
 export default AuthPage;

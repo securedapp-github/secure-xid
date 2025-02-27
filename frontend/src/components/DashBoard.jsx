@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState , useEffect } from "react";
+import axios from "axios";
+
 import  "./DashBoard.css"
 
 const DashBoard = () => {
@@ -9,26 +11,323 @@ const DashBoard = () => {
   const [selectedCountry, setSelectedCountry] = useState("");
   const [filteredCountries, setFilteredCountries] = useState([]);
   // States for transaction analysis
-  const [transactionThreshold, setTransactionThreshold] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [riskLevel, setRiskLevel] = useState(0);
+    const [varianceRisk, setVarianceRisk] = useState(0);
+    const [timeGapConsistency, setTimeGapConsistency] = useState(0);
+    const [directionRisk, setDirectionRisk] = useState(0);
+    const [crossWalletRisk, setCrossWalletRisk] = useState(0);
+    const [circularRisk, setCircularRisk] = useState(0);
+    const [address, setAddress] = useState("");
+    const [totalRiskScore, setTotalRiskScore] = useState(0);
+    const [annualIncomeRange, setAnnualIncomeRange] = useState("");
   const [transactionValue, setTransactionValue] = useState("");
+  const [transactionThreshold, setTransactionThreshold] = useState(null);
   const [transactionRiskScore, setTransactionRiskScore] = useState(null);
-  const [annualIncomeRange, setAnnualIncomeRange] = useState("");
-
   // States for transaction behavioral analysis
   const [transactionBehavior, setTransactionBehavior] = useState("");
   const [behavioralRiskScore, setBehavioralRiskScore] = useState(null);
 
   // State for the aggregated result
   const [aggregateScore, setAggregateScore] = useState(null);
-  //new risk scoring
-  const [transactionFrequency, setTransactionFrequency] = useState("");
-  const [amountVariance, setAmountVariance] = useState("");
-  const [timeGapConsistency, setTimeGapConsistency] = useState("");
-  const [transactionDirection, setTransactionDirection] = useState("");
-  const [crossWalletBehavior, setCrossWalletBehavior] = useState("");
-  const [circularTransactionVolume, setCircularTransactionVolume] = useState("");
+  const [inputAddress, setInputAddress] = useState("");
+  
+    const ALCHEMY_API_KEY = "gQ3YwPsTCsqwjr1ocrnONX63jiNZKkVT";
+    
+    // const address = "0xC95380dc0277Ac927dB290234ff66880C4cdda8c";
+
+    const alchemyUrl = `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_API_KEY}`;
+    const coingeckoUrl = "https://api.coingecko.com/api/v3/simple/price";
 
   // Data for scoring
+
+
+  useEffect(() => {
+    if (!address) return;
+    
+      const fetchTransactions = async () => {
+          try {
+              const response = await axios.post(alchemyUrl, {
+                  jsonrpc: "2.0",
+                  id: 1,
+                  method: "alchemy_getAssetTransfers",
+                  params: [{
+                      fromBlock: "0x0",
+                      toBlock: "latest",
+                      fromAddress: address,
+                      category: ["external", "erc20", "erc721", "erc1155"]
+                  }]
+              });
+
+              const transfers = response.data.result.transfers || [];
+              await processTransactions(transfers);
+          } catch (error) {
+              console.error("❌ Error fetching transactions:", error);
+          } finally {
+              setLoading(false);
+          }
+      };
+
+      fetchTransactions();
+  }, [address]);
+
+  const processTransactions = async (transfers) => {
+      const txCountsByDay = {};
+      const updatedTransactions = [...transfers]; 
+      let stableValues = []; 
+
+      const uniqueAssets = [...new Set(transfers.map(tx => tx.asset).filter(Boolean))];
+      const exchangeRates = await fetchExchangeRates(uniqueAssets);
+
+      for (let i = 0; i < transfers.length; i++) {
+          const tx = transfers[i];
+
+          try {
+              const blockResponse = await axios.post(alchemyUrl, {
+                  jsonrpc: "2.0",
+                  id: 1,
+                  method: "eth_getBlockByNumber",
+                  params: [tx.blockNum, true]
+              });
+
+              const timestampHex = blockResponse?.data?.result?.timestamp;
+              if (!timestampHex) {
+                  console.warn("❌ Missing timestamp for block:", tx.blockNum);
+                  continue;
+              }
+
+              const timestamp = parseInt(timestampHex, 16) * 1000;
+              const dateObj = new Date(timestamp);
+
+              if (isNaN(dateObj.getTime())) {
+                  console.warn("❌ Date conversion failed for timestamp:", timestamp);
+                  continue;
+              }
+
+              const formattedDate = dateObj.toISOString().split("T")[0];
+
+              // Convert transaction value to USD
+              const asset = tx.asset;
+              const tokenValue = parseFloat(tx.value) || 0;
+              const usdValue = await convertToUSD(asset, tokenValue, exchangeRates);
+
+              stableValues.push(usdValue); 
+              
+              updatedTransactions[i] = { 
+                  ...tx, 
+                  metadata: { blockTimestamp: timestamp }, 
+                  usdValue 
+              };
+
+              const key = `${formattedDate}_${tx.from}_${tx.to}`;
+              txCountsByDay[key] = (txCountsByDay[key] || 0) + 1;
+
+          } catch (error) {
+              console.error("❌ Error fetching block data:", error);
+          }
+      }
+
+      setTransactions(updatedTransactions);
+      calculateRiskLevel(txCountsByDay);
+      calculateVarianceRisk(stableValues);
+      analyzeTimeGapConsistency(updatedTransactions);
+      analyzeTransactionDirection(updatedTransactions);
+      analyzeCrossWalletBehavior(updatedTransactions);
+      analyzeCircularTransactionVolume(updatedTransactions);
+      
+      computeRiskScores();
+     
+  };
+
+  const fetchExchangeRates = async (assets) => {
+      if (assets.length === 0) return {};
+
+      try {
+          const assetList = [...new Set(assets.map(asset => asset.toLowerCase()))];
+          if (!assetList.includes("ethereum")) assetList.push("ethereum"); // Ensure ETH is included
+
+          const response = await axios.get(coingeckoUrl, {
+              params: { ids: assetList.join(","), vs_currencies: "usd" }
+          });
+
+          return response.data;
+      } catch (error) {
+          console.error("❌ Error fetching exchange rates:", error);
+          return {};
+      }
+  };
+
+
+  const convertToUSD = async (asset, amount, exchangeRates) => {
+      if (!asset || !amount) return 0;
+
+      let assetId = asset.toLowerCase();
+      if (assetId === "eth") assetId = "ethereum"; 
+
+      if (exchangeRates[assetId]) return amount * exchangeRates[assetId].usd;
+
+      console.warn(`⚠️ Price unavailable for ${asset}`);
+      return 0;
+  };
+
+  const calculateRiskLevel = (txCountsByDay) => {
+      const maxTxPerDay = Math.max(...Object.values(txCountsByDay), 0);
+      if (maxTxPerDay > 20) setRiskLevel(90);
+      else if (maxTxPerDay >= 5) setRiskLevel(50);
+      else setRiskLevel(10);
+  };
+
+  const calculateVarianceRisk = (values) => {
+      if (values.length < 2) {
+          setVarianceRisk("Insufficient data");
+          return;
+      }
+
+      const mean = values.reduce((acc, val) => acc + val, 0) / values.length;
+      const variance = values.map(val => Math.abs((val - mean) / mean) * 100);
+      const highVarianceCount = variance.filter(v => v > 15).length;
+      const mediumVarianceCount = variance.filter(v => v >= 5 && v <= 15).length;
+      const totalTransactions = variance.length;
+
+      if (highVarianceCount / totalTransactions >= 0.8) setVarianceRisk(90);
+      else if (mediumVarianceCount / totalTransactions >= 0.5) setVarianceRisk(50);
+      else setVarianceRisk(10);
+  };
+
+  const analyzeTimeGapConsistency = (timestamps) => {
+    if (timestamps.length < 2) {
+        setTimeGapConsistency("Insufficient data");
+        return;
+    }
+
+    timestamps.sort((a, b) => a - b);  
+
+    let timeGaps = [];
+    for (let i = 1; i < timestamps.length; i++) {
+        const gap = (timestamps[i] - timestamps[i - 1]) / 1000 / 60; 
+        timeGaps.push(gap);
+    }
+
+    const avgGap = timeGaps.reduce((sum, gap) => sum + gap, 0) / timeGaps.length;
+    const deviation = timeGaps.map(gap => Math.abs((gap - avgGap) / avgGap) * 100);
+    
+    const highDeviationCount = deviation.filter(d => d > 50).length;
+    const mediumDeviationCount = deviation.filter(d => d >= 20 && d <= 50).length;
+    const totalTransactions = deviation.length;
+
+    if (highDeviationCount / totalTransactions >= 0.7) {
+        setTimeGapConsistency(10);
+    } else if (mediumDeviationCount / totalTransactions >= 0.5) {
+        setTimeGapConsistency(50);
+    } else {
+        setTimeGapConsistency(10);
+    }
+};
+const analyzeTransactionDirection = (transactions) => {
+  const txMap = new Map();
+  transactions.forEach(tx => {
+      const key = `${tx.from}_${tx.to}`;
+      if (!txMap.has(key)) txMap.set(key, []);
+      txMap.get(key).push(tx.metadata.blockTimestamp);
+  });
+  
+  let loopCount = 0, backAndForthCount = 0;
+  for (let [key, timestamps] of txMap.entries()) {
+      const [from, to] = key.split("_");
+      const reverseKey = `${to}_${from}`;
+      if (txMap.has(reverseKey)) {
+          timestamps.sort((a, b) => a - b);
+          const reverseTimestamps = txMap.get(reverseKey).sort((a, b) => a - b);
+          
+          timestamps.forEach(ts => {
+              if (reverseTimestamps.some(rt => Math.abs(rt - ts) <= 24 * 60 * 60 * 1000)) {
+                  loopCount++;
+              } else {
+                  backAndForthCount++;
+              }
+          });
+      }
+  }
+  
+  const totalPairs = txMap.size;
+  if (loopCount / totalPairs >= 0.5) setDirectionRisk(90);
+  else if (backAndForthCount / totalPairs >= 0.3) setDirectionRisk(50);
+  else setDirectionRisk(10);
+};
+
+const analyzeCrossWalletBehavior = (transactions) => {
+  const interactionMap = new Map();
+  transactions.forEach(tx => {
+      if (!interactionMap.has(tx.to)) {
+          interactionMap.set(tx.to, new Set());
+      }
+      interactionMap.get(tx.to).add(tx.from);
+  });
+  
+  let highRiskCount = 0, mediumRiskCount = 0, lowRiskCount = 0;
+  interactionMap.forEach((senders, receiver) => {
+      const senderCount = senders.size;
+      if (senderCount > 10) highRiskCount++;
+      else if (senderCount > 3) mediumRiskCount++;
+      else lowRiskCount++;
+  });
+  
+  if (highRiskCount > mediumRiskCount && highRiskCount > lowRiskCount) {
+      setCrossWalletRisk(90);
+  } else if (mediumRiskCount > lowRiskCount) {
+      setCrossWalletRisk(50);
+  } else {
+      setCrossWalletRisk(10);
+  }
+};
+
+const analyzeCircularTransactionVolume = (transactions) => {
+  let totalSent = 0, totalReturned = 0;
+  const sentMap = new Map();
+
+  transactions.forEach(tx => {
+      if (!sentMap.has(tx.from)) {
+          sentMap.set(tx.from, 0);
+      }
+      sentMap.set(tx.from, sentMap.get(tx.from) + tx.usdValue);
+  });
+
+  transactions.forEach(tx => {
+      if (sentMap.has(tx.to)) {
+          totalReturned += tx.usdValue;
+      }
+      totalSent += tx.usdValue;
+  });
+
+  const returnPercentage = (totalReturned / totalSent) * 100;
+  
+  if (returnPercentage > 70) {
+      setCircularRisk(90);
+  } else if (returnPercentage > 30) {
+      setCircularRisk(50);
+  } else {
+      setCircularRisk(10);
+  }
+};
+
+const computeRiskScores = () => {
+  const scores = [riskLevel, varianceRisk, timeGapConsistency, directionRisk, crossWalletRisk, circularRisk];
+  
+  const validScores = scores.filter(score => typeof score === "number");
+  if (validScores.length === 0) {
+      setTotalRiskScore(0);
+      return;
+  }
+  
+  const sumScores = validScores.reduce((sum, score) => sum + score, 0);
+  const averageRisk = sumScores / validScores.length;
+
+  setTotalRiskScore(averageRisk.toFixed(2));
+    setTransactionRiskScore(averageRisk.toFixed(2));
+  
+};
+
   const countries = {
     Afghanistan: 80,
     Albania: 40,
@@ -230,23 +529,27 @@ const DashBoard = () => {
      "Not Verified": 80,
    };
  
+   const incomeRanges = {
+    "< $10,000": 10000,
+    "$10,000 - $25,000": 25000,
+    "$25,000 - $50,000": 50000,
+    "$50,000 - $100,000": 100000,
+    "$100,000 - $250,000": 250000,
+    "$250,000+": 500000,
+  };
   
-  const transactionScores = { low: 10, medium: 50, high: 80 };
+  
+   const transactionScores = {
+    low: 20,
+    medium: 60,
+    high: 100,
+  };
   
  
    const behaviorScores = {
      "Suspicious Past": 90,
      "Normal Past": 50,
      "Very Good Past": 10,
-   };
- 
-   const incomeRanges = {
-    '< $10,000': 10000 ,
-    '$10,000 - $25,000': 25000 ,
-    '$25,000 - $50,000': 50000 ,
-    '$50,000 - $100,000': 100000,
-    '$100,000 - $250,000': 250000, 
-    '$250,000+': 500000 
    };
 
 
@@ -276,20 +579,6 @@ const DashBoard = () => {
     setCustomerRiskScore(totalRiskScore);
   };
 
-  // Calculate Transaction Risk Score
-  const calculateTransactionRiskScore = () => {
-    const transactionValueNumber = parseFloat(transactionValue) || 0;
-    const incomeMedian = incomeRanges[annualIncomeRange] || 0;
-    const threshold = incomeMedian * 0.33;
-    setTransactionThreshold(threshold);
-    let score = 0;
-
-    if (transactionValueNumber <= threshold) score = transactionScores.low;
-    else if (transactionValueNumber <= 2 * threshold) score = transactionScores.medium;
-    else score = transactionScores.high;
-
-    setTransactionRiskScore(score);
-  };
 
   // Calculate Behavioral Risk Score
   const calculateBehavioralRiskScore = () => {
@@ -297,45 +586,72 @@ const DashBoard = () => {
     setBehavioralRiskScore(behaviorScore);
   };
 
-  const calculateNewRiskScores = () => {
-    const frequencyScore = transactionFrequency === "high" ? 30 : transactionFrequency === "medium" ? 20 : 10;
-    const varianceScore = amountVariance === "high" ? 30 : amountVariance === "medium" ? 20 : 10;
-    const timeGapScore = timeGapConsistency === "high" ? 30 : timeGapConsistency === "medium" ? 20 : 10;
-    const directionScore = transactionDirection === "high" ? 30 : transactionDirection === "medium" ? 20 : 10;
-    const crossWalletScore = crossWalletBehavior === "high" ? 30 : crossWalletBehavior === "medium" ? 20 : 10;
-    const circularVolumeScore = circularTransactionVolume === "high" ? 30 : circularTransactionVolume === "medium" ? 20 : 10;
+  // const calculateNewRiskScores = () => {
+  //   const frequencyScore = transactionFrequency === "high" ? 30 : transactionFrequency === "medium" ? 20 : 10;
+  //   const varianceScore = amountVariance === "high" ? 30 : amountVariance === "medium" ? 20 : 10;
+  //   const timeGapScore = timeGapConsistency === "high" ? 30 : timeGapConsistency === "medium" ? 20 : 10;
+  //   const directionScore = transactionDirection === "high" ? 30 : transactionDirection === "medium" ? 20 : 10;
+  //   const crossWalletScore = crossWalletBehavior === "high" ? 30 : crossWalletBehavior === "medium" ? 20 : 10;
+  //   const circularVolumeScore = circularTransactionVolume === "high" ? 30 : circularTransactionVolume === "medium" ? 20 : 10;
 
-    return {
-      frequencyScore,
-      varianceScore,
-      timeGapScore,
-      directionScore,
-      crossWalletScore,
-      circularVolumeScore,
-    };
-  };
+  //   return {
+  //     frequencyScore,
+  //     varianceScore,
+  //     timeGapScore,
+  //     directionScore,
+  //     crossWalletScore,
+  //     circularVolumeScore,
+  //   };
+  // };
 
   // Aggregate Results
-  const aggregateResults = () => {
-    const scores = [
-      { score: transactionRiskScore, weight: 0.5 },
-      { score: customerRiskScore, weight: 0.2 },
-      { score: behavioralRiskScore, weight: 0.3 },
-      ...Object.values(calculateNewRiskScores()).map(score => ({ score, weight: 0.1 })),
-    ].filter((entry) => entry.score !== null);
+  // const aggregateResults = () => {
+  //   const scores = [
+  //     { score: totalRiskScore, weight: 0.5 },
+  //     { score: customerRiskScore, weight: 0.2 },
+  //     { score: behavioralRiskScore, weight: 0.3 },
+  //     ...Object.values(calculateNewRiskScores()).map(score => ({ score, weight: 0.1 })),
+  //   ].filter((entry) => entry.score !== null);
 
-    if (scores.length === 9) {
+  //   if (scores.length === 9) {
+  //     const weightedScore = scores.reduce(
+  //       (sum, { score, weight }) => sum + score * weight,
+  //       0
+  //     );
+  //     const scaledScore = weightedScore * 10; // Scale to 1000
+  //     setAggregateScore(scaledScore);
+  //   } else {
+  //     alert("Please calculate all scores before aggregating.");
+  //   }
+  // };
+  const aggregateResults = () => {
+
+    // Define the scores and their respective weights
+    const scores = [
+      { score: totalRiskScore, weight: 0.5 }, // 50% weight
+      { score: customerRiskScore, weight: 0.3 }, // 30% weight
+      { score: behavioralRiskScore, weight: 0.2 }, // 20% weight
+    ].filter((entry) => entry.score !== null); // Filter out null scores
+    console.log(scores);
+    
+    // Check if all required scores are available
+    if (scores.length === 3) {
+      // Calculate the weighted score
       const weightedScore = scores.reduce(
         (sum, { score, weight }) => sum + score * weight,
         0
       );
+  
+      // Scale the score to 1000
       const scaledScore = weightedScore * 10; // Scale to 1000
+  
+      // Set the aggregate score
       setAggregateScore(scaledScore);
     } else {
+      // Alert if any score is missing
       alert("Please calculate all scores before aggregating.");
     }
   };
-
   // Generate Quote Based on Aggregate Score
   const getQuote = (score) => {
     if (score > 700) {
@@ -347,312 +663,160 @@ const DashBoard = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#FAFAFA] p-4 sm:p-8">
-      <header className="mb-8 text-center sm:text-left">
-        <div className="flex justify-center sm:justify-start items-center">
-          <span className="text-2xl font-bold">
-            SECURE<span className="text-[#00FF85]">X</span>-ID
-          </span>
+ return (
+  <div className="min-h-screen bg-[#FAFAFA] p-4 sm:p-8">
+    <header className="mb-8 text-center sm:text-left">
+      <div className="flex justify-center sm:justify-start items-center">
+        <span className="text-2xl font-bold">
+          SECURE<span className="text-[#00FF85]">X</span>-ID
+        </span>
+      </div>
+    </header>
+    <div className="app-container">
+      <h1 className="text-3xl font-bold mb-6">Risk Scoring Model</h1>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Customer Risk Analysis Section */}
+        <div className="analysis-card bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-2xl font-semibold mb-4">Customer Risk Analysis</h2>
+          <label className="block mb-4">
+            Country:
+            <input
+              type="text"
+              value={selectedCountry}
+              onChange={handleCountrySearch}
+              placeholder="Search country"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00FF85] focus:border-transparent"
+            />
+          </label>
+          {filteredCountries.length > 0 && (
+            <ul className="autocomplete-list mt-2 bg-white border border-gray-300 rounded-md shadow-lg">
+              {filteredCountries.map((country) => (
+                <li
+                  key={country}
+                  onClick={() => {
+                    setSelectedCountry(country);
+                    setFilteredCountries([]);
+                  }}
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                >
+                  {country}
+                </li>
+              ))}
+            </ul>
+          )}
+          <label className="block mb-4">
+            Occupation:
+            <select
+              value={selectedOccupation}
+              onChange={(e) => setSelectedOccupation(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00FF85] focus:border-transparent"
+            >
+              <option value="">Select an Occupation</option>
+              {Object.keys(occupations).map((occupation) => (
+                <option key={occupation} value={occupation}>
+                  {occupation}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block mb-4">
+            KYC Status:
+            <select
+              value={kycStatus}
+              onChange={(e) => setKycStatus(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00FF85] focus:border-transparent"
+            >
+              <option value="">Select KYC Status</option>
+              {Object.keys(kycScores).map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button 
+            onClick={calculateCustomerRiskScore}
+            className="w-full bg-[#00FF85] text-white py-2 px-4 rounded-md hover:bg-[#00CC6A] transition-colors"
+          >
+            Calculate Customer Risk Score
+          </button>
+          {customerRiskScore !== null && (
+            <p className="mt-4 text-lg font-semibold">Customer Risk Score: {customerRiskScore.toFixed(2)}</p>
+          )}
         </div>
+
+        {/* Transaction Analysis Section */}
+        <div className="analysis-card bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-2xl font-semibold mb-4">Transaction Analysis</h2>
+          <input 
+            type="text" 
+            placeholder="Enter wallet address" 
+            value={inputAddress} 
+            onChange={(e) => setInputAddress(e.target.value)} 
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00FF85] focus:border-transparent"
+          />
+          
         
-      </header>
-      <div className="app-container">
-        <h1>Risk Scoring Model</h1>
-        <div className="analysis-container">
-          {/* Customer Risk Analysis Section */}
-          <div className="analysis-card">
-            <h2>Customer Risk Analysis</h2>
-            <label>
-              Country:
-              <input
-                type="text"
-                value={selectedCountry}
-                onChange={handleCountrySearch}
-                placeholder="Search country"
-              />
-            </label>
-            {filteredCountries.length > 0 && (
-              <ul className="autocomplete-list">
-                {filteredCountries.map((country) => (
-                  <li
-                    key={country}
-                    onClick={() => {
-                      setSelectedCountry(country);
-                      setFilteredCountries([]);
-                    }}
-                  >
-                    {country}
-                  </li>
-                ))}
-              </ul>
-            )}
-            <label>
-              Occupation:
-              <select
-                value={selectedOccupation}
-                onChange={(e) => setSelectedOccupation(e.target.value)}
-              >
-                <option value="">Select an Occupation</option>
-                {Object.keys(occupations).map((occupation) => (
-                  <option key={occupation} value={occupation}>
-                    {occupation}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              KYC Status:
-              <select
-                value={kycStatus}
-                onChange={(e) => setKycStatus(e.target.value)}
-              >
-                <option value="">Select KYC Status</option>
-                {Object.keys(kycScores).map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button onClick={calculateCustomerRiskScore}>
-              Calculate Customer Risk Score
-            </button>
-            {customerRiskScore !== null && (
-              <p>Customer Risk Score: {customerRiskScore.toFixed(2)}</p>
-            )}
-          </div>
+          <button 
+            onClick={() => setAddress(inputAddress)}
+            className="w-full bg-[#00FF85] text-white py-2 px-4 rounded-md hover:bg-[#00CC6A] transition-colors"
+          >
+            Fetch Transactions
+          </button>
+          {transactionRiskScore !== null && (
+            <p className="mt-4 text-lg font-semibold">Transaction Risk Score: {transactionRiskScore}</p>
+          )}
+        </div>
 
-          {/* Transaction Analysis Section */}
-          <div className="analysis-card">
-            <h2>Transaction Analysis</h2>
-            <label>
-            Annual Income Range:
-              <select
-                value={annualIncomeRange}
-                onChange={(e) => setAnnualIncomeRange(e.target.value)}
-              >
-                <option value="">Select an Income Range</option>
-                {Object.keys(incomeRanges).map((range) => (
-                  <option key={range} value={range}>
-                    {range}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {transactionThreshold !== null && (
-              <p>Calculated Threshold: {transactionThreshold.toFixed(2)}</p>
-            )}
-            <label>
-              Transaction Value:
-              <input
-                type="number"
-                value={transactionValue}
-                onChange={(e) => setTransactionValue(e.target.value)}
-                placeholder="Enter transaction value"
-              />
-            </label>
-            <button onClick={calculateTransactionRiskScore}>
-              Calculate Transaction Risk Score
-            </button>
-            {transactionRiskScore !== null && (
-              <p>Transaction Risk Score: {transactionRiskScore}</p>
-            )}
-          </div>
-
-          {/* Transaction Behavioral Analysis Section */}
-          <div className="analysis-card">
-            <h2>Behavioral Analysis</h2>
-            <label>
-              Transaction Behavior:
-              <select
-                value={transactionBehavior}
-                onChange={(e) => setTransactionBehavior(e.target.value)}
-              >
-                <option value="">Select a Behavior</option>
-                {Object.keys(behaviorScores).map((behavior) => (
-                  <option key={behavior} value={behavior}>
-                    {behavior}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button onClick={calculateBehavioralRiskScore}>
-              Calculate Behavioral Risk Score
-            </button>
-            {behavioralRiskScore !== null && (
-              <p>Behavioral Risk Score: {behavioralRiskScore}</p>
-            )}
-          </div>
-
-          <div className="analysis-card">
-            <h2>Additional Risk Scoring Criteria</h2>
-            <label>
-              Frequency of Transactions with the Same Wallet:
-              <select
-                value={transactionFrequency}
-                onChange={(e) => setTransactionFrequency(e.target.value)}
-              >
-                <option value="">Select Frequency</option>
-                <option value="high">High Risk (3 pts)</option>
-                <option value="medium">Medium Risk (2 pts)</option>
-                <option value="low">Low Risk (1 pt)</option>
-              </select>
-            </label>
-            <label>
-              Transaction Amount Variance:
-              <select
-                value={amountVariance}
-                onChange={(e) => setAmountVariance(e.target.value)}
-              >
-                <option value="">Select Variance</option>
-                <option value="high">High Risk (3 pts)</option>
-                <option value="medium">Medium Risk (2 pts)</option>
-                <option value="low">Low Risk (1 pt)</option>
-              </select>
-            </label>
-            <label>
-              Time Gap Consistency:
-              <select
-                value={timeGapConsistency}
-                onChange={(e) => setTimeGapConsistency(e.target.value)}
-              >
-                <option value="">Select Consistency</option>
-                <option value="high">High Risk (3 pts)</option>
-                <option value="medium">Medium Risk (2 pts)</option>
-                <option value="low">Low Risk (1 pt)</option>
-              </select>
-            </label>
-            <label>
-              Direction of Transactions:
-              <select
-                value={transactionDirection}
-                onChange={(e) => setTransactionDirection(e.target.value)}
-              >
-                <option value="">Select Direction</option>
-                <option value="high">High Risk (3 pts)</option>
-                <option value="medium">Medium Risk (2 pts)</option>
-                <option value="low">Low Risk (1 pt)</option>
-              </select>
-            </label>
-            <label>
-              Cross-Wallet Behavior:
-              <select
-                value={crossWalletBehavior}
-                onChange={(e) => setCrossWalletBehavior(e.target.value)}
-              >
-                <option value="">Select Behavior</option>
-                <option value="high">High Risk (3 pts)</option>
-                <option value="medium">Medium Risk (2 pts)</option>
-                <option value="low">Low Risk (1 pt)</option>
-              </select>
-            </label>
-            <label>
-              Circular Transaction Volume:
-              <select
-                value={circularTransactionVolume}
-                onChange={(e) => setCircularTransactionVolume(e.target.value)}
-              >
-                <option value="">Select Volume</option>
-                <option value="high">High Risk (3 pts)</option>
-                <option value="medium">Medium Risk (2 pts)</option>
-                <option value="low">Low Risk (1 pt)</option>
-              </select>
-            </label>
-          </div>
-
-            {/* Aggregate Results Section */}
-            <div className="analysis-card">
-            <h2>X-ID Results</h2>
-            <button onClick={aggregateResults}>Get X-ID Result</button>
-            {aggregateScore !== null && (
-              <div>
-                <p>X-ID Score: {aggregateScore.toFixed(2)}</p>
-                <p>{getQuote(aggregateScore)}</p>
-              </div>
-            )}
-          </div>
+        {/* Behavioral Analysis Section */}
+        <div className="analysis-card bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-2xl font-semibold mb-4">Behavioral Analysis</h2>
+          <label className="block mb-4">
+            Transaction Behavior:
+            <select
+              value={transactionBehavior}
+              onChange={(e) => setTransactionBehavior(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00FF85] focus:border-transparent"
+            >
+              <option value="">Select a Behavior</option>
+              {Object.keys(behaviorScores).map((behavior) => (
+                <option key={behavior} value={behavior}>
+                  {behavior}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button 
+            onClick={calculateBehavioralRiskScore}
+            className="w-full bg-[#00FF85] text-white py-2 px-4 rounded-md hover:bg-[#00CC6A] transition-colors"
+          >
+            Calculate Behavioral Risk Score
+          </button>
+          {behavioralRiskScore !== null && (
+            <p className="mt-4 text-lg font-semibold">Behavioral Risk Score: {behavioralRiskScore}</p>
+          )}
         </div>
       </div>
-    </div>
 
-            
-            
-  );
+      {/* Aggregate Results Section */}
+      <div className="mt-8 analysis-card bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-2xl font-semibold mb-4">X-ID Score</h2>
+        <button 
+          onClick={aggregateResults}
+          className="w-full bg-[#00FF85] text-white py-2 px-4 rounded-md hover:bg-[#00CC6A] transition-colors"
+        >
+          Get X-ID Score
+        </button>
+        {aggregateScore !== null && (
+          <div className="mt-4">
+            <p className="text-lg font-semibold">X-ID Score: {aggregateScore.toFixed(2)}</p>
+            <p className="text-gray-600">{getQuote(aggregateScore)}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+);
 };
 
 export default DashBoard;
-
-
-
-
-
-
-
-
-// import React, { useEffect, useState } from "react";
-// import axios from "axios";
-// import { jwtDecode } from "jwt-decode";
-
-// const Dashboard = () => {
-//   const [kycStatus, setKycStatus] = useState(null);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState(null);
-
-//   useEffect(() => {
-//     const fetchKycStatus = async () => {
-//       const token = localStorage.getItem("authToken"); // Get token from localStorage
-
-//       if (!token) {
-//         setError("No authentication token found. Please log in.");
-//         setLoading(false);
-//         return;
-//       }
-
-//       try {
-//         // Decode JWT token to extract user_id
-//         const decodedToken = jwtDecode(token);
-//         const userId = decodedToken?.user_id; // Ensure this matches the structure of your token
-//         console.log(token)
-//         if (!userId) {
-//           setError("User ID not found in token.");
-//           setLoading(false);
-//           return;
-//         }
-
-//         // Make GET request to fetch KYC status
-//         const response = await axios.get(
-//           `https://8082-38-137-52-117.ngrok-free.app/kyc-status/${54}`,
-//           {
-//             headers: {
-//               "Authorization": `Bearer ${token}`,
-//             },
-//           }
-//         );
-
-//         setKycStatus(response.data.status); // Set response data to state
-
-//       } catch (err) {
-//         console.error("Error fetching KYC status:", err);
-//         setError("Failed to fetch KYC status.");
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchKycStatus();
-//   }, []);
-
-//   if (loading) return <div>Loading...</div>;
-//   if (error) return <div style={{ color: "red" }}>{error}</div>;
-
-//   return (
-//     <div>
-//       <h2>Dashboard</h2>
-//       <p><strong>KYC Status:</strong> {kycStatus || "Unknown"}</p>
-     
-//     </div>
-//   );
-// };
-
-// export default Dashboard;

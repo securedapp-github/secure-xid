@@ -63,7 +63,7 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
   
         try {
           const response = await axios.post(
-            "https://8082-38-137-52-117.ngrok-free.app/upload-kyc",
+            "https://89ef-38-183-11-215.ngrok-free.app/upload-kyc",
             formData,
             {
               headers: {

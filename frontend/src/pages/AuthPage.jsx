@@ -10,6 +10,7 @@ const Signup = ({ toggleForm }) => {
     email: "",
     phone_number: "",
     password: "",
+    reEnterPassword: "", // New field for re-entering password
   });
   const [otp, setOtp] = useState("");
   const [isOtpSent, setIsOtpSent] = useState(false);
@@ -24,9 +25,16 @@ const Signup = ({ toggleForm }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Check if passwords match
+    if (formData.password !== formData.reEnterPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
     try {
       const response = await fetch(
-        "https://89ef-38-183-11-215.ngrok-free.app/signup",
+        "https://3f2f-38-183-11-215.ngrok-free.app/signup",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -37,18 +45,20 @@ const Signup = ({ toggleForm }) => {
 
       if (response.ok) {
         setIsOtpSent(true);
+        toast.success("OTP sent to your email");
       } else {
-        alert(data.message || "Signup failed");
+        toast.error(data.message || "Signup failed");
       }
     } catch (error) {
       console.error("Error signing up:", error);
+      toast.error("An error occurred. Please try again.");
     }
   };
 
   const handleVerifyOtp = async () => {
     try {
       const response = await fetch(
-        "https://89ef-38-183-11-215.ngrok-free.app/verify-otp",
+        "https://3f2f-38-183-11-215.ngrok-free.app/verify-otp",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -56,15 +66,20 @@ const Signup = ({ toggleForm }) => {
         }
       );
       const data = await response.json();
-
+  
       if (response.ok) {
-        alert("OTP Verified! Now log in.");
-        toggleForm();
+        toast.success("OTP Verified! Now log in.");
+  
+        // Delay the form toggle to allow the toast to be displayed
+        setTimeout(() => {
+          toggleForm();
+        }, 2000); // 2 seconds delay
       } else {
-        alert("Invalid OTP");
+        toast.error("Invalid OTP");
       }
     } catch (error) {
       console.error("Error verifying OTP:", error);
+      toast.error("An error occurred. Please try again.");
     }
   };
 
@@ -102,6 +117,14 @@ const Signup = ({ toggleForm }) => {
             type="password"
             name="password"
             placeholder="Password"
+            required
+            onChange={handleChange}
+          />
+          <input
+            className="w-full p-3 border rounded"
+            type="password"
+            name="reEnterPassword"
+            placeholder="Re-enter Password"
             required
             onChange={handleChange}
           />
@@ -146,7 +169,7 @@ const Login = ({ toggleForm, onForgotPassword }) => {
     e.preventDefault();
     try {
       const response = await fetch(
-        "https://89ef-38-183-11-215.ngrok-free.app/login",
+        "https://3f2f-38-183-11-215.ngrok-free.app/login",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -154,16 +177,21 @@ const Login = ({ toggleForm, onForgotPassword }) => {
         }
       );
       const data = await response.json();
-
+  
       if (response.ok) {
-        alert("Login successful!");
+        toast.success("Login successful!");
         localStorage.setItem("authToken", data.token);
-        navigate("/kyc");
+  
+        // Delay navigation to allow the toast to be displayed
+        setTimeout(() => {
+          navigate("/kyc");
+        }, 2000); // 2000 milliseconds (2 seconds) delay
       } else {
-        alert(data.message || "Login failed");
+        toast.error(data.message || "Login failed");
       }
     } catch (error) {
       console.error("Error logging in:", error);
+      toast.error("An error occurred. Please try again.");
     }
   };
 
@@ -217,12 +245,11 @@ const ForgotPassword = ({ onBackToLogin }) => {
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [step, setStep] = useState(1); // 1: Enter Email, 2: Enter OTP, 3: Enter New Password
-  const [message, setMessage] = useState("");
 
   const handleSendOtp = async () => {
     try {
       const response = await fetch(
-        "https://89ef-38-183-11-215.ngrok-free.app/forgot-password",
+        "https://3f2f-38-183-11-215.ngrok-free.app/forgot-password",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -244,13 +271,13 @@ const ForgotPassword = ({ onBackToLogin }) => {
   };
 
   const handleVerifyOtp = async () => {
-    const authToken = localStorage.getItem("authToken"); // Retrieve the auth token from localStorage
-
+    const authToken = localStorage.getItem("authToken");
+  
     if (!authToken) {
       toast.error("No authentication token found. Please log in again.");
       return;
     }
-
+  
     try {
       const response = await fetch(
         "https://89ef-38-183-11-215.ngrok-free.app/reset-password",
@@ -258,18 +285,20 @@ const ForgotPassword = ({ onBackToLogin }) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`, // Include the auth token in the headers
+            Authorization: `Bearer ${authToken}`,
           },
-          body: JSON.stringify({ email, otp, newPassword }), // Include newPassword here
+          body: JSON.stringify({ email, otp, newPassword }),
         }
       );
       const data = await response.json();
-
+  
       if (response.ok) {
-        toast.success("Password reset successfully!"); // Show success toast
+        toast.success("Password reset successfully!");
+  
+        // Delay the navigation to allow the toast to be displayed
         setTimeout(() => {
-          onBackToLogin(); // Go back to login page after a short delay
-        }, 2000); // Delay for 2 seconds to allow the user to see the toast
+          onBackToLogin();
+        }, 2000); // 2 seconds delay
       } else {
         toast.error(data.message || "Invalid OTP or failed to reset password");
       }
@@ -278,10 +307,8 @@ const ForgotPassword = ({ onBackToLogin }) => {
       toast.error("An error occurred. Please try again.");
     }
   };
-
   return (
     <div className="w-full p-6">
-      <ToastContainer /> {/* Add ToastContainer to display toasts */}
       <h2 className="text-2xl font-bold mb-4">Forgot Password</h2>
       {step === 1 && (
         <div className="space-y-4">
@@ -327,7 +354,6 @@ const ForgotPassword = ({ onBackToLogin }) => {
           </button>
         </div>
       )}
-      {message && <p className="mt-4 text-center text-red-500">{message}</p>}
       <p
         className="mt-4 text-blue-500 cursor-pointer"
         onClick={onBackToLogin}
@@ -337,7 +363,6 @@ const ForgotPassword = ({ onBackToLogin }) => {
     </div>
   );
 };
-
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -383,6 +408,9 @@ const AuthPage = () => {
         <img src={logo} alt="SecureDApp Logo" className="w-20" />
         <p className="font-semibold text-lg">SecureDApp</p>
       </div>
+
+      {/* Toast Container */}
+      <ToastContainer />
     </div>
   );
 };

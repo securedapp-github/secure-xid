@@ -11,6 +11,11 @@ const DashBoard = () => {
   const [selectedCountry, setSelectedCountry] = useState("");
   const [filteredCountries, setFilteredCountries] = useState([]);
   // States for transaction analysis
+  const [totalUSDValue, setTotalUSDValue] = useState(0);
+  const [isFilterApplied, setIsFilterApplied] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [thresholdRisk, setThresholdRisk] = useState(0);
   const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [riskLevel, setRiskLevel] = useState(0);
@@ -32,7 +37,7 @@ const DashBoard = () => {
   // State for the aggregated result
   const [aggregateScore, setAggregateScore] = useState(null);
   const [inputAddress, setInputAddress] = useState("");
-  
+  const [calculationType, setCalculationType] = useState("annual"); // 'annual' or 'monthly'
     const ALCHEMY_API_KEY = "gQ3YwPsTCsqwjr1ocrnONX63jiNZKkVT";
     
     // const address = "0xC95380dc0277Ac927dB290234ff66880C4cdda8c";
@@ -45,104 +50,210 @@ const DashBoard = () => {
     const [kycLoading, setKycLoading] = useState(false);
     const [kycError, setKycError] = useState(null);
 
-
-  useEffect(() => {
-    if (!address) return;
+    useEffect(() => {
+      if (!address) return;
     
       const fetchTransactions = async () => {
-          try {
-              const response = await axios.post(alchemyUrl, {
-                  jsonrpc: "2.0",
-                  id: 1,
-                  method: "alchemy_getAssetTransfers",
-                  params: [{
-                      fromBlock: "0x0",
-                      toBlock: "latest",
-                      fromAddress: address,
-                      category: ["external", "erc20", "erc721", "erc1155"]
-                  }]
-              });
-
-              const transfers = response.data.result.transfers || [];
-              await processTransactions(transfers);
-          } catch (error) {
-              console.error("❌ Error fetching transactions:", error);
-          } finally {
-              setLoading(false);
-          }
-      };
-
-      fetchTransactions();
-  }, [address]);
-
-  const processTransactions = async (transfers) => {
-      const txCountsByDay = {};
-      const updatedTransactions = [...transfers]; 
-      let stableValues = []; 
-
-      const uniqueAssets = [...new Set(transfers.map(tx => tx.asset).filter(Boolean))];
-      const exchangeRates = await fetchExchangeRates(uniqueAssets);
-
-      for (let i = 0; i < transfers.length; i++) {
-          const tx = transfers[i];
-
-          try {
-              const blockResponse = await axios.post(alchemyUrl, {
-                  jsonrpc: "2.0",
-                  id: 1,
-                  method: "eth_getBlockByNumber",
-                  params: [tx.blockNum, true]
-              });
-
-              const timestampHex = blockResponse?.data?.result?.timestamp;
-              if (!timestampHex) {
-                  console.warn("❌ Missing timestamp for block:", tx.blockNum);
-                  continue;
-              }
-
-              const timestamp = parseInt(timestampHex, 16) * 1000;
-              const dateObj = new Date(timestamp);
-
-              if (isNaN(dateObj.getTime())) {
-                  console.warn("❌ Date conversion failed for timestamp:", timestamp);
-                  continue;
-              }
-
-              const formattedDate = dateObj.toISOString().split("T")[0];
-
-              // Convert transaction value to USD
-              const asset = tx.asset;
-              const tokenValue = parseFloat(tx.value) || 0;
-              const usdValue = await convertToUSD(asset, tokenValue, exchangeRates);
-
-              stableValues.push(usdValue); 
-              
-              updatedTransactions[i] = { 
-                  ...tx, 
-                  metadata: { blockTimestamp: timestamp }, 
-                  usdValue 
-              };
-
-              const key = `${formattedDate}_${tx.from}_${tx.to}`;
-              txCountsByDay[key] = (txCountsByDay[key] || 0) + 1;
-
-          } catch (error) {
-              console.error("❌ Error fetching block data:", error);
-          }
-      }
-
-      setTransactions(updatedTransactions);
-      calculateRiskLevel(txCountsByDay);
-      calculateVarianceRisk(stableValues);
-      analyzeTimeGapConsistency(updatedTransactions);
-      analyzeTransactionDirection(updatedTransactions);
-      analyzeCrossWalletBehavior(updatedTransactions);
-      analyzeCircularTransactionVolume(updatedTransactions);
-      
+        try {
+          const response = await axios.post(alchemyUrl, {
+            jsonrpc: "2.0",
+            id: 1,
+            method: "alchemy_getAssetTransfers",
+            params: [{
+              fromBlock: "0x0",
+              toBlock: "latest",
+              fromAddress: address,
+              category: ["external", "erc20", "erc721", "erc1155"],
+            }],
+          });
     
-     
-  };
+          const transfers = response.data.result.transfers || [];
+          await processTransactions(transfers, selectedYear, selectedMonth);
+        } catch (error) {
+          console.error("❌ Error fetching transactions:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+    
+      fetchTransactions();
+    }, [address, selectedYear, selectedMonth]); // Add selectedYear and selectedMonth to the dependency array
 
+  // const processTransactions = async (transfers) => {
+  //   const txCountsByDay = {};
+  //   const updatedTransactions = [...transfers];
+  //   let stableValues = [];
+  //   let totalUSDValue = 0; // To store the total USD value of all transactions
+  
+  //   const uniqueAssets = [...new Set(transfers.map(tx => tx.asset).filter(Boolean))];
+  //   const exchangeRates = await fetchExchangeRates(uniqueAssets);
+  
+  //   for (let i = 0; i < transfers.length; i++) {
+  //     const tx = transfers[i];
+  
+  //     try {
+  //       const blockResponse = await axios.post(alchemyUrl, {
+  //         jsonrpc: "2.0",
+  //         id: 1,
+  //         method: "eth_getBlockByNumber",
+  //         params: [tx.blockNum, true],
+  //       });
+  
+  //       const timestampHex = blockResponse?.data?.result?.timestamp;
+  //       if (!timestampHex) {
+  //         console.warn("❌ Missing timestamp for block:", tx.blockNum);
+  //         continue;
+  //       }
+  
+  //       const timestamp = parseInt(timestampHex, 16) * 1000;
+  //       const dateObj = new Date(timestamp);
+  
+  //       if (isNaN(dateObj.getTime())) {
+  //         console.warn("❌ Date conversion failed for timestamp:", timestamp);
+  //         continue;
+  //       }
+  
+  //       const formattedDate = dateObj.toISOString().split("T")[0];
+  
+  //       // Convert transaction value to USD
+  //       const asset = tx.asset;
+  //       const tokenValue = parseFloat(tx.value) || 0;
+  //       const usdValue = await convertToUSD(asset, tokenValue, exchangeRates);
+  
+  //       stableValues.push(usdValue);
+  //       totalUSDValue += usdValue; // Add to total USD value
+  
+  //       updatedTransactions[i] = {
+  //         ...tx,
+  //         metadata: { blockTimestamp: timestamp },
+  //         usdValue,
+  //       };
+  
+  //       const key = `${formattedDate}_${tx.from}_${tx.to}`;
+  //       txCountsByDay[key] = (txCountsByDay[key] || 0) + 1;
+  //     } catch (error) {
+  //       console.error("❌ Error fetching block data:", error);
+  //     }
+  //   }
+  
+  //   setTransactions(updatedTransactions);
+  
+  //   // Calculate threshold risk
+  //   const threshold = incomeRanges[annualIncomeRange] * 0.33; // Annual threshold
+  //   let thresholdRiskScore = 0;
+  
+  //   if (totalUSDValue > threshold * 2) {
+  //     thresholdRiskScore = 100; // High risk
+  //   } else if (totalUSDValue > threshold) {
+  //     thresholdRiskScore = 50; // Medium risk
+  //   } else {
+  //     thresholdRiskScore = 0; // Low risk
+  //   }
+  
+  //   setThresholdRisk(thresholdRiskScore);
+  
+  //   // Calculate other risk factors
+  //   calculateRiskLevel(txCountsByDay);
+  //   calculateVarianceRisk(stableValues);
+  //   analyzeTimeGapConsistency(updatedTransactions);
+  //   analyzeTransactionDirection(updatedTransactions);
+  //   analyzeCrossWalletBehavior(updatedTransactions);
+  //   analyzeCircularTransactionVolume(updatedTransactions);
+  // };
+  
+  
+  const processTransactions = async (transfers, selectedYear, selectedMonth) => {
+    const txCountsByDay = {};
+    const updatedTransactions = [];
+    let stableValues = [];
+    let totalUSD = 0;
+
+    const uniqueAssets = [...new Set(transfers.map((tx) => tx.asset).filter(Boolean))];
+    const exchangeRates = await fetchExchangeRates(uniqueAssets);
+
+    for (let i = 0; i < transfers.length; i++) {
+      const tx = transfers[i];
+
+      try {
+        const blockResponse = await axios.post(alchemyUrl, {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "eth_getBlockByNumber",
+          params: [tx.blockNum, true],
+        });
+
+        const timestampHex = blockResponse?.data?.result?.timestamp;
+        if (!timestampHex) {
+          console.warn("❌ Missing timestamp for block:", tx.blockNum);
+          continue;
+        }
+
+        const timestamp = parseInt(timestampHex, 16) * 1000;
+        const dateObj = new Date(timestamp);
+
+        if (isNaN(dateObj.getTime())) {
+          console.warn("❌ Date conversion failed for timestamp:", timestamp);
+          continue;
+        }
+
+        // Apply filter only if `isFilterApplied` is true
+        if (
+          !isFilterApplied ||
+          (dateObj.getFullYear() === selectedYear &&
+            dateObj.getMonth() + 1 === selectedMonth)
+        ) {
+          const formattedDate = dateObj.toISOString().split("T")[0];
+
+          // Convert transaction value to USD
+          const asset = tx.asset;
+          const tokenValue = parseFloat(tx.value) || 0;
+          const usdValue = await convertToUSD(asset, tokenValue, exchangeRates);
+
+          stableValues.push(usdValue);
+          totalUSD += usdValue;
+
+          updatedTransactions.push({
+            ...tx,
+            metadata: { blockTimestamp: timestamp },
+            usdValue,
+          });
+
+          const key = `${formattedDate}_${tx.from}_${tx.to}`;
+          txCountsByDay[key] = (txCountsByDay[key] || 0) + 1;
+        }
+      } catch (error) {
+        console.error("❌ Error fetching block data:", error);
+      }
+    }
+
+    setTransactions(updatedTransactions);
+    setTotalUSDValue(totalUSD);
+
+    // Calculate threshold risk based on calculation type
+    const annualThreshold = incomeRanges[annualIncomeRange] * 0.33; // Annual threshold
+    const monthlyThreshold = annualThreshold / 12; // Monthly threshold
+
+    let thresholdRiskScore = 0;
+    let threshold = calculationType === "annual" ? annualThreshold : monthlyThreshold;
+
+    if (totalUSD > threshold * 2) {
+      thresholdRiskScore = 100; // High risk
+    } else if (totalUSD > threshold) {
+      thresholdRiskScore = 50; // Medium risk
+    } else {
+      thresholdRiskScore = 0; // Low risk
+    }
+
+    setThresholdRisk(thresholdRiskScore);
+
+    // Calculate other risk factors
+    calculateRiskLevel(txCountsByDay);
+    calculateVarianceRisk(stableValues);
+    analyzeTimeGapConsistency(updatedTransactions);
+    analyzeTransactionDirection(updatedTransactions);
+    analyzeCrossWalletBehavior(updatedTransactions);
+    analyzeCircularTransactionVolume(updatedTransactions);
+  };
   const fetchExchangeRates = async (assets) => {
       if (assets.length === 0) return {};
 
@@ -167,7 +278,15 @@ const DashBoard = () => {
   }, [riskLevel, varianceRisk, timeGapConsistency, directionRisk, crossWalletRisk, circularRisk]);
   
   const computeRiskScores = () => {
-    const scores = [riskLevel, varianceRisk, timeGapConsistency, directionRisk, crossWalletRisk, circularRisk];
+    const scores = [
+      riskLevel,
+      varianceRisk,
+      timeGapConsistency,
+      directionRisk,
+      crossWalletRisk,
+      circularRisk,
+      thresholdRisk, // Include threshold risk
+    ];
   
     const validScores = scores.filter(score => typeof score === "number");
     if (validScores.length === 0) {
@@ -182,6 +301,21 @@ const DashBoard = () => {
     setTotalRiskScore(averageRisk.toFixed(2));
     setTransactionRiskScore(averageRisk.toFixed(2));
   };
+  
+  const renderCalculationTypeDropdown = () => (
+    <label className="block mb-4">
+      Calculation Type:
+      <select
+        value={calculationType}
+        onChange={(e) => setCalculationType(e.target.value)}
+        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00FF85] focus:border-transparent"
+      >
+        <option value="annual">Annual</option>
+        <option value="monthly">Monthly</option>
+      </select>
+    </label>
+  );
+
   const convertToUSD = async (asset, amount, exchangeRates) => {
       if (!asset || !amount) return 0;
 
@@ -760,8 +894,64 @@ const analyzeCircularTransactionVolume = (transactions) => {
         </div>
 
     </header>
+    
     <div className="app-container">
+    
       <h1 className="text-3xl font-bold mb-6">Risk Scoring Model</h1>
+      {renderCalculationTypeDropdown()}
+      <div className="mt-4">
+  <label className="block mb-2">
+    Select Year:
+    <select
+      value={selectedYear}
+      onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00FF85] focus:border-transparent"
+    >
+      {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+        <option key={year} value={year}>
+          {year}
+        </option>
+      ))}
+    </select>
+  </label>
+  <label className="block mb-2">
+    Select Month:
+    <select
+      value={selectedMonth}
+      onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00FF85] focus:border-transparent"
+    >
+      {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+        <option key={month} value={month}>
+          {new Date(0, month - 1).toLocaleString('default', { month: 'long' })}
+        </option>
+      ))}
+    </select>
+  </label>
+  <div className="flex space-x-4">
+    <button
+      onClick={() => setIsFilterApplied(true)}
+      className="w-full bg-[#00FF85] text-white py-2 px-4 rounded-md hover:bg-[#00CC6A] transition-colors"
+    >
+      Apply Filter
+    </button>
+    <button
+      onClick={() => setIsFilterApplied(false)}
+      className="w-full bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
+    >
+      Clear Filter
+    </button>
+  </div>
+</div>
+<div className="mt-6">
+  {isFilterApplied ? (
+    <p className="text-lg font-semibold">
+      Showing transactions for {new Date(0, selectedMonth - 1).toLocaleString('default', { month: 'long' })} {selectedYear}
+    </p>
+  ) : (
+    <p className="text-lg font-semibold">Showing all transactions</p>
+  )}
+</div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Customer Risk Analysis Section */}
         <div className="analysis-card bg-white p-6 rounded-lg shadow-md">
@@ -834,7 +1024,7 @@ const analyzeCircularTransactionVolume = (transactions) => {
         </div>
 
        {/* Transaction Analysis Section */}
-<div className="analysis-card bg-white p-6 rounded-lg shadow-md">
+       <div className="analysis-card bg-white p-6 rounded-lg shadow-md">
   <h2 className="text-2xl font-semibold mb-4">Transaction Analysis</h2>
   <input 
     type="text" 
@@ -850,6 +1040,39 @@ const analyzeCircularTransactionVolume = (transactions) => {
   >
     Fetch Transactions
   </button>
+
+  {/* Income Range Dropdown */}
+  <label className="block mb-4 mt-6">
+    Annual Income Range:
+    <select
+      value={annualIncomeRange}
+      onChange={(e) => setAnnualIncomeRange(e.target.value)}
+      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00FF85] focus:border-transparent"
+    >
+      <option value="">Select Income Range</option>
+      {Object.keys(incomeRanges).map((range) => (
+        <option key={range} value={range}>
+          {range}
+        </option>
+      ))}
+    </select>
+  </label>
+
+  {/* Display Threshold Value */}
+  {annualIncomeRange && (
+    <div className="mt-4">
+      <p className="text-lg font-semibold">
+        Threshold Value ( {annualIncomeRange}): ${(incomeRanges[annualIncomeRange] * 0.33).toFixed(2)}
+      </p>
+    </div>
+  )}
+
+  {/* Display Total USD Value */}
+  <div className="mt-4">
+    <p className="text-lg font-semibold">
+      Total USD Value: ${totalUSDValue.toFixed(2)}
+    </p>
+  </div>
 
   {/* Display Individual Risk Scores */}
   {transactionRiskScore !== null && (
@@ -879,6 +1102,10 @@ const analyzeCircularTransactionVolume = (transactions) => {
         <div className="flex justify-between">
           <span className="font-medium">Circular Transaction Volume Risk:</span>
           <span>{circularRisk}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="font-medium">Threshold Risk:</span>
+          <span>{thresholdRisk}</span>
         </div>
       </div>
 
@@ -968,7 +1195,7 @@ const analyzeCircularTransactionVolume = (transactions) => {
               {tx.to}
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              ${tx.usdValue?.toFixed(2) || "0.00"}
+              ${tx.usdValue?.toFixed(20) || "0.00"}
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
               {tx.asset || "Unknown"}

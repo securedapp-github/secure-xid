@@ -43,14 +43,14 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
     const token = localStorage.getItem("authToken");
     const walletAddress = localStorage.getItem("walletAddress");
     if (!token) {
-      setTimeout(() => toast.error("No token found, please log in."), 100);
+      toast.error("No token found, please log in.");
       return;
     }
     try {
       const decodedToken = jwtDecode(token);
       const userId = decodedToken?.user_id;
       if (!userId) {
-        setTimeout(() => toast.error("User ID not found in token."), 100);
+        toast.error("User ID not found in token.");
         return;
       }
       if (frontFile && backFile && imageSrc) {
@@ -74,22 +74,21 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
           );
   
           if (response.status === 201) {
-            setTimeout(() => toast.success("✅ Your documents have been submitted successfully!"), 100);
+            toast.success("✅ Your documents have been submitted successfully!");
             navigate("/dashboard");
           }
         } catch (error) {
           console.error("Error uploading files:", error);
-          setTimeout(() => toast.error("❌ Your documents could not be submitted. Please try again."), 100);
+          toast.error("❌ Your documents could not be submitted. Please try again.");
         }
       } else {
-        setTimeout(() => toast.warning("⚠️ Please upload all required images."), 100);
+        toast.warning("⚠️ Please upload all required images.");
       }
     } catch (error) {
       console.error("Invalid token format:", error);
-      setTimeout(() => toast.error("⚠️ Invalid token. Please log in again."), 100);
+      toast.error("⚠️ Invalid token. Please log in again.");
     }
   };
-  
 
   return (
     <div className="max-w-lg mx-auto p-6 bg-white shadow-md rounded-lg text-center">

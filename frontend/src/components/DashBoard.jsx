@@ -1,6 +1,6 @@
 import React, { useState , useEffect } from "react";
 import axios from "axios";
-
+import { jwtDecode } from "jwt-decode";
 import  "./DashBoard.css"
 
 const DashBoard = () => {
@@ -40,7 +40,10 @@ const DashBoard = () => {
     const alchemyUrl = `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_API_KEY}`;
     const coingeckoUrl = "https://api.coingecko.com/api/v3/simple/price";
 
-  // Data for scoring
+    const [kycStatusFromAPI, setKycStatusFromAPI] = useState("");
+    const [walletAddressFromAPI, setWalletAddressFromAPI] = useState("");
+    const [kycLoading, setKycLoading] = useState(false);
+    const [kycError, setKycError] = useState(null);
 
 
   useEffect(() => {
@@ -136,7 +139,7 @@ const DashBoard = () => {
       analyzeCrossWalletBehavior(updatedTransactions);
       analyzeCircularTransactionVolume(updatedTransactions);
       
-      computeRiskScores();
+    
      
   };
 
@@ -158,7 +161,27 @@ const DashBoard = () => {
       }
   };
 
-
+  useEffect(() => {
+    // This effect will run whenever any of the risk scores change
+    computeRiskScores();
+  }, [riskLevel, varianceRisk, timeGapConsistency, directionRisk, crossWalletRisk, circularRisk]);
+  
+  const computeRiskScores = () => {
+    const scores = [riskLevel, varianceRisk, timeGapConsistency, directionRisk, crossWalletRisk, circularRisk];
+  
+    const validScores = scores.filter(score => typeof score === "number");
+    if (validScores.length === 0) {
+      setTotalRiskScore(0);
+      setTransactionRiskScore(0);
+      return;
+    }
+  
+    const sumScores = validScores.reduce((sum, score) => sum + score, 0);
+    const averageRisk = sumScores / validScores.length;
+  
+    setTotalRiskScore(averageRisk.toFixed(2));
+    setTransactionRiskScore(averageRisk.toFixed(2));
+  };
   const convertToUSD = async (asset, amount, exchangeRates) => {
       if (!asset || !amount) return 0;
 
@@ -311,22 +334,23 @@ const analyzeCircularTransactionVolume = (transactions) => {
   }
 };
 
-const computeRiskScores = () => {
-  const scores = [riskLevel, varianceRisk, timeGapConsistency, directionRisk, crossWalletRisk, circularRisk];
+// const computeRiskScores = () => {
+//   const scores = [riskLevel, varianceRisk, timeGapConsistency, directionRisk, crossWalletRisk, circularRisk];
   
-  const validScores = scores.filter(score => typeof score === "number");
-  if (validScores.length === 0) {
-      setTotalRiskScore(0);
-      return;
-  }
-  
-  const sumScores = validScores.reduce((sum, score) => sum + score, 0);
-  const averageRisk = sumScores / validScores.length;
+//   const validScores = scores.filter(score => typeof score === "number");
+//   if (validScores.length === 0) {
+//       setTotalRiskScore(0);
+//       setTransactionRiskScore(0);
+//       return;
+//   }
+//   console.log(scores)
+//   const sumScores = validScores.reduce((sum, score) => sum + score, 0);
+//   const averageRisk = sumScores / validScores.length;
 
-  setTotalRiskScore(averageRisk.toFixed(2));
-    setTransactionRiskScore(averageRisk.toFixed(2));
+//   setTotalRiskScore(averageRisk.toFixed(2));
+//     setTransactionRiskScore(averageRisk.toFixed(2));
   
-};
+// };
 
   const countries = {
     Afghanistan: 80,
@@ -552,7 +576,57 @@ const computeRiskScores = () => {
      "Very Good Past": 10,
    };
 
+   const fetchKYCStatus = async () => {
+    setKycLoading(true);
+    setKycError(null);
+  
+    try {
+      // Assume the JWT token is stored in localStorage
+      const token = localStorage.getItem("authToken");
+      console.log("Token:", token);
+  
+      if (!token) {
+        throw new Error("JWT token not found");
+      }
+  
+      // Decode the JWT token to get the user ID
+      const decodedToken = jwtDecode(token);
+      console.log("Decoded Token:", decodedToken);
+  
+      const userId = decodedToken?.user_id; // Ensure this matches the field in your token
+      if (!userId) {
+        throw new Error("User ID not found in token");
+      }
+  
+      console.log("User ID:", userId);
+  
+      // Fetch KYC status from the API
+      const response = await axios.get(
+        `https://89ef-38-183-11-215.ngrok-free.app/kyc-status/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+       
+      console.log("API Response:", response.data);
+  
+      // Update KYC status and wallet address
+      setKycStatusFromAPI(response.data.status);
+      setWalletAddressFromAPI(response.data.wallet_address);
+    } catch (error) {
+      setKycError("Failed to fetch KYC status");
+      console.error("Error fetching KYC status:", error.response?.data || error.message);
+    } finally {
+      setKycLoading(false);
+    }
+  };
 
+  // Fetch KYC status on component mount
+  useEffect(() => {
+    fetchKYCStatus();
+  }, []);
 
   const handleCountrySearch = (e) => {
     const query = e.target.value.toLowerCase();
@@ -666,11 +740,25 @@ const computeRiskScores = () => {
  return (
   <div className="min-h-screen bg-[#FAFAFA] p-4 sm:p-8">
     <header className="mb-8 text-center sm:text-left">
-      <div className="flex justify-center sm:justify-start items-center">
-        <span className="text-2xl font-bold">
-          SECURE<span className="text-[#00FF85]">X</span>-ID
-        </span>
-      </div>
+    <div className="flex justify-between items-center">
+          <span className="text-2xl font-bold">
+            SECURE<span className="text-[#00FF85]">X</span>-ID
+          </span>
+          <div className="flex items-center">
+            {kycLoading ? (
+              <span>Loading KYC status...</span>
+            ) : kycError ? (
+              <span className="text-red-500">{kycError}</span>
+            ) : (
+              <div className="flex items-center">
+                <span className="mr-2">KYC Status: {kycStatusFromAPI}</span>
+                <span className="mr-2">Wallet: {walletAddressFromAPI}</span>
+                <div className="w-8 h-8 bg-gray-300 rounded-full"></div> {/* Placeholder for profile picture */}
+              </div>
+            )}
+          </div>
+        </div>
+
     </header>
     <div className="app-container">
       <h1 className="text-3xl font-bold mb-6">Risk Scoring Model</h1>
@@ -745,28 +833,62 @@ const computeRiskScores = () => {
           )}
         </div>
 
-        {/* Transaction Analysis Section */}
-        <div className="analysis-card bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-semibold mb-4">Transaction Analysis</h2>
-          <input 
-            type="text" 
-            placeholder="Enter wallet address" 
-            value={inputAddress} 
-            onChange={(e) => setInputAddress(e.target.value)} 
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00FF85] focus:border-transparent"
-          />
-          
-        
-          <button 
-            onClick={() => setAddress(inputAddress)}
-            className="w-full bg-[#00FF85] text-white py-2 px-4 rounded-md hover:bg-[#00CC6A] transition-colors"
-          >
-            Fetch Transactions
-          </button>
-          {transactionRiskScore !== null && (
-            <p className="mt-4 text-lg font-semibold">Transaction Risk Score: {transactionRiskScore}</p>
-          )}
+       {/* Transaction Analysis Section */}
+<div className="analysis-card bg-white p-6 rounded-lg shadow-md">
+  <h2 className="text-2xl font-semibold mb-4">Transaction Analysis</h2>
+  <input 
+    type="text" 
+    placeholder="Enter wallet address" 
+    value={inputAddress} 
+    onChange={(e) => setInputAddress(e.target.value)} 
+    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00FF85] focus:border-transparent"
+  />
+  
+  <button 
+    onClick={() => setAddress(inputAddress)}
+    className="w-full bg-[#00FF85] text-white py-2 px-4 rounded-md hover:bg-[#00CC6A] transition-colors mt-4"
+  >
+    Fetch Transactions
+  </button>
+
+  {/* Display Individual Risk Scores */}
+  {transactionRiskScore !== null && (
+    <div className="mt-6">
+      <h3 className="text-xl font-semibold mb-4">Transaction Risk Breakdown</h3>
+      <div className="space-y-3">
+        <div className="flex justify-between">
+          <span className="font-medium">Transaction Frequency Risk:</span>
+          <span>{riskLevel}</span>
         </div>
+        <div className="flex justify-between">
+          <span className="font-medium">Transaction Amount Variance Risk:</span>
+          <span>{varianceRisk}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="font-medium">Time Gap Consistency:</span>
+          <span>{timeGapConsistency}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="font-medium">Transaction Direction Risk:</span>
+          <span>{directionRisk}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="font-medium">Cross-Wallet Behavior Risk:</span>
+          <span>{crossWalletRisk}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="font-medium">Circular Transaction Volume Risk:</span>
+          <span>{circularRisk}</span>
+        </div>
+      </div>
+
+      {/* Display Total Transaction Risk Score */}
+      <div className="mt-6">
+        <p className="text-lg font-semibold">Transaction Risk Score: {transactionRiskScore}</p>
+      </div>
+    </div>
+  )}
+</div>
 
         {/* Behavioral Analysis Section */}
         <div className="analysis-card bg-white p-6 rounded-lg shadow-md">
@@ -815,6 +937,48 @@ const computeRiskScores = () => {
         )}
       </div>
     </div>
+    {/* Transaction Details Section */}
+<div className="mt-8 analysis-card bg-white p-6 rounded-lg shadow-md">
+  <h2 className="text-2xl font-semibold mb-4">Transaction Details</h2>
+  <div className="overflow-x-auto">
+    <table className="min-w-full bg-white border border-gray-200">
+      <thead className="bg-gray-50">
+        <tr>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Hash</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">To</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value (USD)</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-gray-200">
+        {transactions.map((tx, index) => (
+          <tr key={index} className="hover:bg-gray-50 transition-colors">
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              {tx.metadata?.blockTimestamp ? new Date(tx.metadata.blockTimestamp).toISOString().split("T")[0] : "N/A"}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              {tx.hash?.slice(0, 10)}...
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              {tx.from}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              {tx.to}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              ${tx.usdValue?.toFixed(2) || "0.00"}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              {tx.asset || "Unknown"}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
   </div>
 );
 };

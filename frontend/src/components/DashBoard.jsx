@@ -167,13 +167,13 @@ const DashBoard = () => {
     const updatedTransactions = [];
     let stableValues = [];
     let totalUSD = 0;
-
+  
     const uniqueAssets = [...new Set(transfers.map((tx) => tx.asset).filter(Boolean))];
     const exchangeRates = await fetchExchangeRates(uniqueAssets);
-
+  
     for (let i = 0; i < transfers.length; i++) {
       const tx = transfers[i];
-
+  
       try {
         const blockResponse = await axios.post(alchemyUrl, {
           jsonrpc: "2.0",
@@ -181,43 +181,45 @@ const DashBoard = () => {
           method: "eth_getBlockByNumber",
           params: [tx.blockNum, true],
         });
-
+  
         const timestampHex = blockResponse?.data?.result?.timestamp;
         if (!timestampHex) {
           console.warn("❌ Missing timestamp for block:", tx.blockNum);
           continue;
         }
-
+  
         const timestamp = parseInt(timestampHex, 16) * 1000;
         const dateObj = new Date(timestamp);
-
+  
         if (isNaN(dateObj.getTime())) {
           console.warn("❌ Date conversion failed for timestamp:", timestamp);
           continue;
         }
-
-        // Apply filter only if `isFilterApplied` is true
+  
+        // Apply filter based on calculation type
         if (
           !isFilterApplied ||
-          (dateObj.getFullYear() === selectedYear &&
+          (calculationType === "annual" && dateObj.getFullYear() === selectedYear) ||
+          (calculationType === "monthly" &&
+            dateObj.getFullYear() === selectedYear &&
             dateObj.getMonth() + 1 === selectedMonth)
         ) {
           const formattedDate = dateObj.toISOString().split("T")[0];
-
+  
           // Convert transaction value to USD
           const asset = tx.asset;
           const tokenValue = parseFloat(tx.value) || 0;
           const usdValue = await convertToUSD(asset, tokenValue, exchangeRates);
-
+  
           stableValues.push(usdValue);
           totalUSD += usdValue;
-
+  
           updatedTransactions.push({
             ...tx,
             metadata: { blockTimestamp: timestamp },
             usdValue,
           });
-
+  
           const key = `${formattedDate}_${tx.from}_${tx.to}`;
           txCountsByDay[key] = (txCountsByDay[key] || 0) + 1;
         }
@@ -225,17 +227,19 @@ const DashBoard = () => {
         console.error("❌ Error fetching block data:", error);
       }
     }
-
+  
     setTransactions(updatedTransactions);
     setTotalUSDValue(totalUSD);
-
-    // Calculate threshold risk based on calculation type
-    const annualThreshold = incomeRanges[annualIncomeRange] * 0.33; // Annual threshold
+  
+    // Calculate median and annual threshold
+    const [minIncome, maxIncome] = incomeRanges[annualIncomeRange] || [0, 0];
+    const medianIncome = (minIncome + maxIncome) / 2;
+    const annualThreshold = medianIncome * 0.33; // 33% of the median
     const monthlyThreshold = annualThreshold / 12; // Monthly threshold
-
+  
     let thresholdRiskScore = 0;
     let threshold = calculationType === "annual" ? annualThreshold : monthlyThreshold;
-
+  
     if (totalUSD > threshold * 2) {
       thresholdRiskScore = 100; // High risk
     } else if (totalUSD > threshold) {
@@ -243,9 +247,9 @@ const DashBoard = () => {
     } else {
       thresholdRiskScore = 0; // Low risk
     }
-
+  
     setThresholdRisk(thresholdRiskScore);
-
+  
     // Calculate other risk factors
     calculateRiskLevel(txCountsByDay);
     calculateVarianceRisk(stableValues);
@@ -254,6 +258,9 @@ const DashBoard = () => {
     analyzeCrossWalletBehavior(updatedTransactions);
     analyzeCircularTransactionVolume(updatedTransactions);
   };
+
+
+  
   const fetchExchangeRates = async (assets) => {
       if (assets.length === 0) return {};
 
@@ -688,14 +695,13 @@ const analyzeCircularTransactionVolume = (transactions) => {
    };
  
    const incomeRanges = {
-    "< $10,000": 10000,
-    "$10,000 - $25,000": 25000,
-    "$25,000 - $50,000": 50000,
-    "$50,000 - $100,000": 100000,
-    "$100,000 - $250,000": 250000,
-    "$250,000+": 500000,
+    "< $25000": [0, 25000], // [min, max]
+    "$25000 - $50000": [25000, 50000],
+    "$50000 - $100000": [50000, 100000],
+    "$100000 - $500000": [100000, 500000],
+    "$500000 - $1000000": [500000, 1000000],
+    "$1000000+": [1000000, 0], // Use Infinity for the upper bound
   };
-  
   
    const transactionScores = {
     low: 20,
@@ -1060,12 +1066,13 @@ const analyzeCircularTransactionVolume = (transactions) => {
 
   {/* Display Threshold Value */}
   {annualIncomeRange && (
-    <div className="mt-4">
-      <p className="text-lg font-semibold">
-        Threshold Value ( {annualIncomeRange}): ${(incomeRanges[annualIncomeRange] * 0.33).toFixed(2)}
-      </p>
-    </div>
-  )}
+  <div className="mt-4">
+    
+    <p className="text-lg font-semibold">
+      Annual Threshold: ${(((incomeRanges[annualIncomeRange][0] + incomeRanges[annualIncomeRange][1]) / 2) * 0.33).toFixed(2)}
+    </p>
+  </div>
+)}
 
   {/* Display Total USD Value */}
   <div className="mt-4">

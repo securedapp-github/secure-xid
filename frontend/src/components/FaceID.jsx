@@ -45,10 +45,7 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
       toast.warning("⚠️ Please confirm your photo before submitting.");
       return;
     }
-    if (!isWalletConnected) {
-      toast.warning("⚠️ Please connect your wallet before submitting.");
-      return;
-    }
+   
 
     const token = localStorage.getItem("authToken");
     const walletAddress = localStorage.getItem("walletAddress");

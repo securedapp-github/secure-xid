@@ -1,34 +1,33 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import AuthPage from "./pages/AuthPage"; // Login & Signup Page
-import SelectDocument from "./components/SelectDocument";
-import VerifyDocument from "./components/VerifyDocument";
-import UploadDocument from "./components/UploadDocument";
-import Layout from "./components/Layout";
-import KycPage from "./pages/KycPage";
-import DashBoard from "./components/DashBoard";
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'; // Remove BrowserRouter import
+import AuthPage from './pages/AuthPage';
+import KycPage from './pages/KycPage';
+import DashBoard from './components/DashBoard';
+import Loader from './components/Loader';
 
-// import DarkUploadDocument from "./components/DarkUploadDocument";
-// import CameraAccessScreen from "./components/CameraAccessScreen";
-// import CameraReadyScreen from "./components/CameraReadyScreen";
 const App = () => {
-  return (
-    <Router>
-    
-      <Routes>
-        {/* Authentication Page */}
-        <Route path="/" element={<AuthPage />} />
+  const [loading, setLoading] = useState(false);
+  const location = useLocation(); // Now this will work
 
-        {/* KYC Process (Protected Routes after login) */}
-      
+  useEffect(() => {
+    setLoading(true); // Show loader on route change
+    const timer = setTimeout(() => {
+      setLoading(false); // Hide loader after 1 second
+    }, 1000);
+
+    return () => clearTimeout(timer); // Cleanup timer
+  }, [location]);
+
+  return (
+    <>
+      {loading && <Loader />} {/* Display loader when loading is true */}
+      <Routes>
+        <Route path="/" element={<AuthPage />} />
         <Route path="/kyc" element={<KycPage />} />
         <Route path="/dashboard" element={<DashBoard />} />
-        
-
-        {/* Redirect unknown routes to login */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-    </Router>
+    </>
   );
 };
 

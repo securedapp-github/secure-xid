@@ -2,6 +2,15 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import "./DashBoard.css";
+import { 
+  Clock, 
+  FileText, 
+  Calendar, 
+  LayoutGrid, 
+  PieChart, 
+  User, 
+  Network 
+} from 'lucide-react';
 
 const DashBoard = () => {
   // States for customer risk analysis
@@ -40,7 +49,7 @@ const DashBoard = () => {
   const [inputAddress, setInputAddress] = useState("");
   const [calculationType, setCalculationType] = useState("annual"); // 'annual' or 'monthly'
   const ALCHEMY_API_KEY = "gQ3YwPsTCsqwjr1ocrnONX63jiNZKkVT";
-
+  const [fetching, setFetching] = useState(false);
   const alchemyUrl = `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_API_KEY}`;
   const coingeckoUrl = "https://api.coingecko.com/api/v3/simple/price";
 
@@ -307,13 +316,13 @@ const DashBoard = () => {
     const updatedTransactions = [];
     let stableValues = [];
     let totalUSD = 0;
-
+  
     const uniqueAssets = [...new Set(transfers.map((tx) => tx.asset).filter(Boolean))];
     const exchangeRates = await fetchExchangeRates(uniqueAssets);
-
+  
     for (let i = 0; i < transfers.length; i++) {
       const tx = transfers[i];
-
+  
       try {
         const blockResponse = await axios.post(alchemyUrl, {
           jsonrpc: "2.0",
@@ -321,21 +330,21 @@ const DashBoard = () => {
           method: "eth_getBlockByNumber",
           params: [tx.blockNum, true],
         });
-
+  
         const timestampHex = blockResponse?.data?.result?.timestamp;
         if (!timestampHex) {
           console.warn("❌ Missing timestamp for block:", tx.blockNum);
           continue;
         }
-
+  
         const timestamp = parseInt(timestampHex, 16) * 1000;
         const dateObj = new Date(timestamp);
-
+  
         if (isNaN(dateObj.getTime())) {
           console.warn("❌ Date conversion failed for timestamp:", timestamp);
           continue;
         }
-
+  
         // Apply filter based on calculation type
         if (
           !isFilterApplied ||
@@ -345,21 +354,21 @@ const DashBoard = () => {
             dateObj.getMonth() + 1 === selectedMonth)
         ) {
           const formattedDate = dateObj.toISOString().split("T")[0];
-
+  
           // Convert transaction value to USD
           const asset = tx.asset;
           const tokenValue = parseFloat(tx.value) || 0;
           const usdValue = await convertToUSD(asset, tokenValue, exchangeRates);
-
+  
           stableValues.push(usdValue);
           totalUSD += usdValue;
-
+  
           updatedTransactions.push({
             ...tx,
             metadata: { blockTimestamp: timestamp },
             usdValue,
           });
-
+  
           const key = `${formattedDate}_${tx.from}_${tx.to}`;
           txCountsByDay[key] = (txCountsByDay[key] || 0) + 1;
         }
@@ -367,14 +376,14 @@ const DashBoard = () => {
         console.error("❌ Error fetching block data:", error);
       }
     }
-
+  
     setTransactions(updatedTransactions);
     setTotalUSDValue(totalUSD);
-
+  
     // Calculate threshold based on income range
     const [minIncome, maxIncome] = incomeRanges[annualIncomeRange] || [0, 0];
     let calculatedThreshold;
-
+  
     if (maxIncome === 0) {
       // Unbounded above (e.g., "$1000000+")
       calculatedThreshold = minIncome * 0.33; // 33% of the lower bound
@@ -386,15 +395,15 @@ const DashBoard = () => {
       const medianIncome = (minIncome + maxIncome) / 2;
       calculatedThreshold = medianIncome * 0.33; // 33% of the median
     }
-
+  
     // Adjust threshold based on calculation type (annual or monthly)
     if (calculationType === "monthly") {
       calculatedThreshold = calculatedThreshold / 12; // Monthly threshold
     }
-
+  
     // Update the threshold state
     setThreshold(calculatedThreshold);
-
+  
     let thresholdRiskScore = 0;
     if (totalUSD > calculatedThreshold * 2) {
       thresholdRiskScore = 100; // High risk
@@ -403,9 +412,9 @@ const DashBoard = () => {
     } else {
       thresholdRiskScore = 0; // Low risk
     }
-
+  
     setThresholdRisk(thresholdRiskScore);
-
+  
     // Calculate other risk factors
     calculateRiskLevel(txCountsByDay);
     calculateVarianceRisk(stableValues);
@@ -694,136 +703,177 @@ const DashBoard = () => {
   }
  
  return (
-  <div className="min-h-screen bg-[#FAFAFA] flex">
+  <div className="flex min-h-screen bg-gray-50">
   {/* Left Sidebar */}
-  <div className="w-60 bg-blue-500 text-white p-4">
-    <div className="text-2xl font-bold mb-8">
-      SECURE<span className="text-white">X</span>-ID
+  <div className="w-24 min-h-screen bg-white border-r border-gray-200 flex flex-col items-center">
+    <div className="w-full py-5 flex justify-center">
+      <div className="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center">
+        <Clock className="text-gray-600 w-6 h-6" />
+      </div>
     </div>
-    <h2 className="text-xl font-semibold mb-6">Risk Scoring Module</h2>
-    <ul className="space-y-4">
-      <li className="hover:bg-blue-800 p-2 rounded-md">Customer Risk Analysis</li>
-      <li className="hover:bg-blue-800 p-2 rounded-md">Transaction Analysis</li>
-      <li className="hover:bg-blue-800 p-2 rounded-md">Behavioral Analysis</li>
-    </ul>
+    
+    <div className="w-full py-5 flex justify-center">
+      <div className="w-12 h-12 rounded-full flex items-center justify-center">
+        <FileText className="text-gray-600 w-6 h-6" />
+      </div>
+    </div>
+    
+    <div className="w-full py-5 flex justify-center">
+      <div className="w-12 h-12 rounded-full flex items-center justify-center">
+        <Calendar className="text-gray-600 w-6 h-6" />
+      </div>
+    </div>
+    
+    <div className="w-full py-5 flex justify-center">
+      <div className="w-12 h-12 rounded-full flex items-center justify-center">
+        <LayoutGrid className="text-gray-600 w-6 h-6" />
+      </div>
+    </div>
+    
+    <div className="w-full py-5 flex justify-center">
+      <div className="w-12 h-12 rounded-full flex items-center justify-center">
+        <PieChart className="text-gray-600 w-6 h-6" />
+      </div>
+    </div>
+    
+    <div className="w-full py-5 flex justify-center">
+      <div className="w-12 h-12 rounded-full flex items-center justify-center">
+        <User className="text-gray-600 w-6 h-6" />
+      </div>
+    </div>
+    
+    <div className="w-full py-5 flex justify-center">
+      <div className="w-12 h-12 rounded-full flex items-center justify-center">
+        <Network className="text-gray-600 w-6 h-6" />
+      </div>
+    </div>
+    
+    <div className="mt-auto mb-10 w-full flex justify-center">
+      <div className="bg-blue-700 w-12 h-12 rounded-full flex items-center justify-center">
+        <span className="text-white text-xl font-bold">X</span>
+      </div>
+    </div>
   </div>
-
+  
   {/* Main Content */}
-  <div className="flex-1 p-4 sm:p-8">
-    {/* Header Section */}
-    <header className="mb-8 flex justify-between items-center">
-      <div className="flex items-center">
-        {kycLoading ? (
-          <span>Loading KYC status...</span>
-        ) : kycError ? (
-          <span className="text-red-500">{kycError}</span>
-        ) : (
-          <div className="flex items-center">
-            <span className="mr-2">KYC Status: {kycStatusFromAPI}</span>
-            <span className="mr-2">Wallet: {walletAddressFromAPI}</span>
-            <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-          </div>
-        )}
+  <div className="flex-1 p-8">
+    {/* Left Side Menu */}
+    <div className="mb-8">
+      <div className="bg-gray-100 rounded-full py-3 px-6 inline-block mb-6">
+        <h2 className="text-gray-700 font-medium">SecureX-ID</h2>
       </div>
-    </header>
-
-    {/* Filter Section */}
-    <div className="flex justify-end mb-6">
-      <div className="flex items-center space-x-4 bg-blue-500 p-3 rounded-lg shadow-md">
-        <label className="text-white">
-          Year:
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-            className="ml-2 bg-transparent text-white border-none focus:outline-none"
-          >
-            {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map((year) => (
-              <option key={year} value={year} className="bg-blue-500">
-                {year}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="text-white">
-          Month:
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-            className="ml-2 bg-transparent text-white border-none focus:outline-none"
-          >
-            {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-              <option key={month} value={month} className="bg-blue-500">
-                {new Date(0, month - 1).toLocaleString('default', { month: 'long' })}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          onClick={() => setIsFilterApplied(true)}
-          className="bg-white text-blue-500 py-1 px-3 rounded-md hover:bg-gray-100 transition-colors"
-        >
-          Apply
-        </button>
-        <button
-          onClick={() => setIsFilterApplied(false)}
-          className="bg-white text-blue-500 py-1 px-3 rounded-md hover:bg-gray-100 transition-colors"
-        >
-          Clear
-        </button>
+      
+      <div className="bg-white rounded-lg py-3 px-6 inline-block">
+        <h2 className="text-blue-700 font-medium">Risk Scoring Module</h2>
       </div>
     </div>
+    
+    <h1 className="text-3xl font-bold mb-8">Risk Scoring Module</h1>
+    
+    {/* Filter Section */}
+<div className="flex justify-end mb-6">
+  <div className="flex items-center space-x-4 bg-blue-500 p-3 rounded-lg shadow-md">
+    {/* Calculation Type Dropdown */}
+    <label className="text-white">
+      Calculation Type:
+      <select
+       
+        value={calculationType}
+        onChange={(e) => setCalculationType(e.target.value)}
+        className="ml-2 bg-blue-500 text-white border-none focus:outline-none"
+      >
+        <option  value="monthly">Monthly</option>
+        <option  value="annual">Annual</option>
+      </select>
+    </label>
+
+    {/* Year Dropdown */}
+    <label className="text-white">
+      Year:
+      <select
+        value={selectedYear}
+        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+        className="ml-2 bg-transparent text-white border-none focus:outline-none"
+      >
+        {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+          <option key={year} value={year} className="bg-blue-500">
+            {year}
+          </option>
+        ))}
+      </select>
+    </label>
+
+    {/* Month Dropdown (only shown for monthly calculation) */}
+    {calculationType === "monthly" && (
+      <label className="text-white">
+        Month:
+        <select
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+          className="ml-2 bg-transparent text-white border-none focus:outline-none"
+        >
+          {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+            <option key={month} value={month} className="bg-blue-500">
+              {new Date(0, month - 1).toLocaleString('default', { month: 'long' })}
+            </option>
+          ))}
+        </select>
+      </label>
+    )}
+
+    {/* Apply and Clear Buttons */}
+    <button
+      onClick={() => setIsFilterApplied(true)}
+      className="bg-white text-blue-500 py-1 px-3 rounded-md hover:bg-gray-100 transition-colors"
+    >
+      Apply
+    </button>
+    <button
+      onClick={() => setIsFilterApplied(false)}
+      className="bg-white text-blue-500 py-1 px-3 rounded-md hover:bg-gray-100 transition-colors"
+    >
+      Clear
+    </button>
+  </div>
+</div>
 
     {/* Main Content Section */}
-    <div className="app-container">
-      <h1 className="text-3xl font-bold mb-6">Risk Scoring Model</h1>
-     
-      <div className="mt-6">
-        {isFilterApplied ? (
-          <p className="text-lg font-semibold">
-            Showing transactions for {new Date(0, selectedMonth - 1).toLocaleString('default', { month: 'long' })} {selectedYear}
-          </p>
-        ) : (
-          <p className="text-lg font-semibold">Showing all transactions</p>
-        )}
-      </div>
-
-      {/* Grid Layout for Analysis Sections */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-        {/* Customer Risk Analysis Section */}
-        <div className="analysis-card bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-semibold mb-4">Customer Risk Analysis</h2>
-          <label className="block mb-4">
-            Country:
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Customer Risk Analysis Section */}
+      <div className="bg-white rounded-lg p-6 shadow-sm">
+        <h2 className="text-xl font-semibold mb-4">Customer Risk Analysis</h2>
+        <div className="space-y-4">
+          <div className="relative">
             <input
               type="text"
               value={selectedCountry}
               onChange={handleCountrySearch}
               placeholder="Search country"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00FF85] focus:border-transparent"
+              className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
             />
-          </label>
-          {filteredCountries.length > 0 && (
-            <ul className="autocomplete-list mt-2 bg-white border border-gray-300 rounded-md shadow-lg">
-              {filteredCountries.map((country) => (
-                <li
-                  key={country}
-                  onClick={() => {
-                    setSelectedCountry(country);
-                    setFilteredCountries([]);
-                  }}
-                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                >
-                  {country}
-                </li>
-              ))}
-            </ul>
-          )}
-          <label className="block mb-4">
-            Occupation:
+            {filteredCountries.length > 0 && (
+              <ul className="autocomplete-list mt-2 bg-white border border-gray-300 rounded-md shadow-lg">
+                {filteredCountries.map((country) => (
+                  <li
+                    key={country}
+                    onClick={() => {
+                      setSelectedCountry(country);
+                      setFilteredCountries([]);
+                    }}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    {country}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          
+          <div className="relative">
             <select
               value={selectedOccupation}
               onChange={(e) => setSelectedOccupation(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00FF85] focus:border-transparent"
+              className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
             >
               <option value="">Select an Occupation</option>
               {Object.keys(occupations).map((occupation) => (
@@ -832,13 +882,13 @@ const DashBoard = () => {
                 </option>
               ))}
             </select>
-          </label>
-          <label className="block mb-4">
-            KYC Status:
+          </div>
+          
+          <div className="relative">
             <select
               value={kycStatus}
               onChange={(e) => setKycStatus(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00FF85] focus:border-transparent"
+              className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
             >
               <option value="">Select KYC Status</option>
               {Object.keys(kycScores).map((status) => (
@@ -847,40 +897,47 @@ const DashBoard = () => {
                 </option>
               ))}
             </select>
-          </label>
+          </div>
+          
           <button 
             onClick={calculateCustomerRiskScore}
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
           >
             Calculate Customer Risk Score
           </button>
-          {customerRiskScore !== null && (
-            <p className="mt-4 text-lg font-semibold">Customer Risk Score: {customerRiskScore.toFixed(2)}</p>
-          )}
         </div>
-
-        {/* Transaction Analysis Section */}
-        <div className="analysis-card bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-semibold mb-4">Transaction Analysis</h2>
+        
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-800 font-medium">Customer Risk Score:</span>
+            <span className="text-3xl font-bold">{customerRiskScore !== null ? customerRiskScore.toFixed(2) : "N/A"}</span>
+          </div>
+        </div>
+      </div>
+      
+      {/* Transaction Analysis Section */}
+      <div className="bg-white rounded-lg p-6 shadow-sm">
+        <h2 className="text-xl font-semibold mb-4">Transaction Analysis</h2>
+        <div className="space-y-4">
           <input 
             type="text" 
             placeholder="Enter wallet address" 
             value={inputAddress} 
             onChange={(e) => setInputAddress(e.target.value)} 
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00FF85] focus:border-transparent"
+            className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
           />
           <button 
             onClick={() => setAddress(inputAddress)}
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors mt-4"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
           >
             Fetch Transactions
           </button>
-          <label className="block mb-4 mt-6">
-            Annual Income Range:
+          
+          <div className="relative">
             <select
               value={annualIncomeRange}
               onChange={(e) => setAnnualIncomeRange(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00FF85] focus:border-transparent"
+              className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
             >
               <option value="">Select Income Range</option>
               {Object.keys(incomeRanges).map((range) => (
@@ -889,19 +946,29 @@ const DashBoard = () => {
                 </option>
               ))}
             </select>
-          </label>
+          </div>
+          
           {annualIncomeRange && (
-            <div className="mt-4">
-              <p className="text-lg font-semibold">
-                Annual Threshold: ${(((incomeRanges[annualIncomeRange][0] + incomeRanges[annualIncomeRange][1]) / 2) * 0.33).toFixed(2)}
-              </p>
-            </div>
-          )}
+  <div className="mt-4">
+    <p className="text-lg font-semibold">
+      {calculationType === "annual" ? "Annual" : "Monthly"} Threshold: $
+      {calculationType === "annual"
+        ? (
+            (incomeRanges[annualIncomeRange][0] + incomeRanges[annualIncomeRange][1]) / 2 * 0.33
+          ).toFixed(2)
+        : (
+            ((incomeRanges[annualIncomeRange][0] + incomeRanges[annualIncomeRange][1]) / 2 * 0.33 / 12
+          ).toFixed(2))}
+    </p>
+  </div>
+)}
+          
           <div className="mt-4">
             <p className="text-lg font-semibold">
               Total USD Value: ${totalUSDValue.toFixed(2)}
             </p>
           </div>
+          
           {transactionRiskScore !== null && (
             <div className="mt-6">
               <h3 className="text-xl font-semibold mb-4">Transaction Risk Breakdown</h3>
@@ -941,16 +1008,17 @@ const DashBoard = () => {
             </div>
           )}
         </div>
-
-        {/* Behavioral Analysis Section */}
-        <div className="analysis-card bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-semibold mb-4">Behavioral Analysis</h2>
-          <label className="block mb-4">
-            Transaction Behavior:
+      </div>
+      
+      {/* Behavioral Analysis Section */}
+      <div className="bg-white rounded-lg p-6 shadow-sm">
+        <h2 className="text-xl font-semibold mb-4">Behavioral Analysis</h2>
+        <div className="space-y-4">
+          <div className="relative">
             <select
               value={transactionBehavior}
               onChange={(e) => setTransactionBehavior(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00FF85] focus:border-transparent"
+              className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
             >
               <option value="">Select a Behavior</option>
               {Object.keys(behaviorScores).map((behavior) => (
@@ -959,39 +1027,48 @@ const DashBoard = () => {
                 </option>
               ))}
             </select>
-          </label>
+          </div>
+          
           <button 
             onClick={calculateBehavioralRiskScore}
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
           >
             Calculate Behavioral Risk Score
           </button>
-          {behavioralRiskScore !== null && (
-            <p className="mt-4 text-lg font-semibold">Behavioral Risk Score: {behavioralRiskScore}</p>
-          )}
+        </div>
+        
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-800 font-medium">Behavioral Risk Score:</span>
+            <span className="text-3xl font-bold">{behavioralRiskScore !== null ? behavioralRiskScore : "N/A"}</span>
+          </div>
         </div>
       </div>
-
-      {/* Aggregate Results Section */}
-      <div className="mt-8 analysis-card bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-semibold mb-4">X-ID Score</h2>
+    </div>
+    
+    {/* X-ID Score Section */}
+    <div className="mt-10 border-2 border-dashed border-gray-300 rounded-lg p-6">
+      <div className="flex flex-col md:flex-row justify-between items-center">
         <button 
           onClick={aggregateResults}
-          className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200"
         >
-          Get X-ID Score
+          Get X-ID Result
         </button>
-        {aggregateScore !== null && (
-          <div className="mt-4">
-            <p className="text-lg font-semibold">X-ID Score: {aggregateScore.toFixed(2)}</p>
-            <p className="text-gray-600">{getQuote(aggregateScore)}</p>
+        
+        <div className="mt-4 md:mt-0 flex items-center">
+          <div className="mr-4">
+            <span className="font-semibold">X-ID Score: {aggregateScore !== null ? aggregateScore.toFixed(2) : "N/A"}</span>
           </div>
-        )}
+          <div>
+            <p className="text-green-500 font-medium">{getQuote(aggregateScore)}</p>
+          </div>
+        </div>
       </div>
     </div>
-
+    
     {/* Transaction Details Section */}
-    <div className="mt-8 analysis-card bg-white p-6 rounded-lg shadow-md">
+    <div className="mt-8 bg-white rounded-lg p-6 shadow-sm">
       <h2 className="text-2xl font-semibold mb-4">Transaction Details</h2>
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white border border-gray-200">

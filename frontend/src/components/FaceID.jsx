@@ -71,7 +71,7 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
         formData.append("wallet_address", walletAddress);
 
         const response = await axios.post(
-          "https://3f2f-38-183-11-215.ngrok-free.app/upload-kyc",
+          "https://119a-38-183-11-215.ngrok-free.app/upload-kyc",
           formData,
           {
             headers: {

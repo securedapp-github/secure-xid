@@ -280,7 +280,55 @@ const DashBoard = () => {
      "Normal Past": 50,
      "Very Good Past": 10,
    };
+   const [profile, setProfile] = useState({
+    status: "",
+    wallet_address: "",
+  });
 
+  // Fetch profile data on component mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const token = localStorage.getItem("authToken");
+      const walletAddress = localStorage.getItem("walletAddress");
+      
+      if (!token) {
+        toast.error("No token found, please log in.");
+        return;
+      }
+      
+      try {
+        const decodedToken = jwtDecode(token);
+        const userId = decodedToken?.user_id;
+
+        if (!userId) {
+          toast.error("User ID not found in token.");
+          return;
+        }
+
+        // Fetch profile data
+        const response = await axios.get(
+          `https://119a-38-183-11-215.ngrok-free.app/kyc-status/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data) {
+          setProfile({
+            status: response.data.status,
+            wallet_address: response.data.wallet_address,
+          });
+        }
+      } catch (error) {
+        console.error("❌ Error fetching profile data:", error);
+        toast.error("Failed to fetch profile data.");
+      }
+    };
+
+    fetchProfile();
+  }, []); 
 
   useEffect(() => {
     if (!address) return;
@@ -706,6 +754,25 @@ const DashBoard = () => {
   <div className="flex min-h-screen bg-gray-50">
   {/* Left Sidebar */}
   <div className="w-24 min-h-screen bg-white border-r border-gray-200 flex flex-col items-center">
+  <div className="w-full py-5 flex justify-center">
+        <div className="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center">
+          <User className="text-gray-600 w-6 h-6" />
+        </div>
+      </div>
+
+      {/* Profile Details */}
+      <div className="mt-4 text-center">
+        <p className="text-sm font-medium text-gray-700">KYC Status:</p>
+        <p className="text-sm text-gray-500">{profile.status || "N/A"}</p>
+      </div>
+      <div className="mt-2 text-center">
+        <p className="text-sm font-medium text-gray-700">Wallet Address:</p>
+        <p className="text-sm text-gray-500">
+          {profile.wallet_address
+            ? `${profile.wallet_address.slice(0, 6)}...${profile.wallet_address.slice(-4)}`
+            : "N/A"}
+        </p>
+      </div>
     <div className="w-full py-5 flex justify-center">
       <div className="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center">
         <Clock className="text-gray-600 w-6 h-6" />

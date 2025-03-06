@@ -358,7 +358,9 @@ const DashBoard = () => {
 
     fetchTransactions();
   }, [address, selectedYear, selectedMonth]);
+  
 
+  
   const processTransactions = async (transfers, selectedYear, selectedMonth) => {
     const txCountsByDay = {};
     const updatedTransactions = [];
@@ -750,434 +752,411 @@ const DashBoard = () => {
     }
   }
  
- return (
-  <div className="flex min-h-screen bg-gray-50">
-  {/* Left Sidebar */}
-  <div className="w-24 min-h-screen bg-white border-r border-gray-200 flex flex-col items-center">
-  <div className="w-full py-5 flex justify-center">
-        <div className="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center">
-          <User className="text-gray-600 w-6 h-6" />
+  return (
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
+      {/* Left Sidebar - Hidden on mobile, visible on desktop */}
+      <div className="hidden md:flex w-24 min-h-screen bg-white border-r border-gray-200 flex-col items-center">
+        <div className="w-full py-5 flex justify-center">
+          <div className="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center">
+            <User className="text-gray-600 w-6 h-6" />
+          </div>
         </div>
-      </div>
-
-      {/* Profile Details */}
-      <div className="mt-4 text-center">
-        <p className="text-sm font-medium text-gray-700">KYC Status:</p>
-        <p className="text-sm text-gray-500">{profile.status || "N/A"}</p>
-      </div>
-      <div className="mt-2 text-center">
-        <p className="text-sm font-medium text-gray-700">Wallet Address:</p>
-        <p className="text-sm text-gray-500">
-          {profile.wallet_address
-            ? `${profile.wallet_address.slice(0, 6)}...${profile.wallet_address.slice(-4)}`
-            : "N/A"}
-        </p>
-      </div>
-    <div className="w-full py-5 flex justify-center">
-      <div className="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center">
-        <Clock className="text-gray-600 w-6 h-6" />
-      </div>
-    </div>
-    
-    <div className="w-full py-5 flex justify-center">
-      <div className="w-12 h-12 rounded-full flex items-center justify-center">
-        <FileText className="text-gray-600 w-6 h-6" />
-      </div>
-    </div>
-    
-    <div className="w-full py-5 flex justify-center">
-      <div className="w-12 h-12 rounded-full flex items-center justify-center">
-        <Calendar className="text-gray-600 w-6 h-6" />
-      </div>
-    </div>
-    
-    <div className="w-full py-5 flex justify-center">
-      <div className="w-12 h-12 rounded-full flex items-center justify-center">
-        <LayoutGrid className="text-gray-600 w-6 h-6" />
-      </div>
-    </div>
-    
-    <div className="w-full py-5 flex justify-center">
-      <div className="w-12 h-12 rounded-full flex items-center justify-center">
-        <PieChart className="text-gray-600 w-6 h-6" />
-      </div>
-    </div>
-    
-    <div className="w-full py-5 flex justify-center">
-      <div className="w-12 h-12 rounded-full flex items-center justify-center">
-        <User className="text-gray-600 w-6 h-6" />
-      </div>
-    </div>
-    
-    <div className="w-full py-5 flex justify-center">
-      <div className="w-12 h-12 rounded-full flex items-center justify-center">
-        <Network className="text-gray-600 w-6 h-6" />
-      </div>
-    </div>
-    
-    <div className="mt-auto mb-10 w-full flex justify-center">
-      <div className="bg-blue-700 w-12 h-12 rounded-full flex items-center justify-center">
-        <span className="text-white text-xl font-bold">X</span>
-      </div>
-    </div>
-  </div>
   
-  {/* Main Content */}
-  <div className="flex-1 p-8">
-    {/* Left Side Menu */}
-    <div className="mb-8">
-      <div className="bg-gray-100 rounded-full py-3 px-6 inline-block mb-6">
-        <h2 className="text-gray-700 font-medium">SecureX-ID</h2>
-      </div>
-      
-      <div className="bg-white rounded-lg py-3 px-6 inline-block">
-        <h2 className="text-blue-700 font-medium">Risk Scoring Module</h2>
-      </div>
-    </div>
-    
-    <h1 className="text-3xl font-bold mb-8">Risk Scoring Module</h1>
-    
-    {/* Filter Section */}
-<div className="flex justify-end mb-6">
-  <div className="flex items-center space-x-4 bg-blue-500 p-3 rounded-lg shadow-md">
-    {/* Calculation Type Dropdown */}
-    <label className="text-white">
-      Calculation Type:
-      <select
-       
-        value={calculationType}
-        onChange={(e) => setCalculationType(e.target.value)}
-        className="ml-2 bg-blue-500 text-white border-none focus:outline-none"
-      >
-        <option  value="monthly">Monthly</option>
-        <option  value="annual">Annual</option>
-      </select>
-    </label>
-
-    {/* Year Dropdown */}
-    <label className="text-white">
-      Year:
-      <select
-        value={selectedYear}
-        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-        className="ml-2 bg-transparent text-white border-none focus:outline-none"
-      >
-        {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map((year) => (
-          <option key={year} value={year} className="bg-blue-500">
-            {year}
-          </option>
+        {/* Profile Details */}
+        <div className="mt-4 text-center">
+          <p className="text-sm font-medium text-gray-700">KYC Status:</p>
+          <p className="text-sm text-gray-500">{profile.status || "N/A"}</p>
+        </div>
+        <div className="mt-2 text-center">
+          <p className="text-sm font-medium text-gray-700">Wallet Address:</p>
+          <p className="text-sm text-gray-500">
+            {profile.wallet_address
+              ? `${profile.wallet_address.slice(0, 6)}...${profile.wallet_address.slice(-4)}`
+              : "N/A"}
+          </p>
+        </div>
+  
+        {/* Icons */}
+        {[
+          Clock, FileText, Calendar, LayoutGrid, PieChart, User, Network,
+        ].map((Icon, index) => (
+          <div key={index} className="w-full py-5 flex justify-center">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center">
+              <Icon className="text-gray-600 w-6 h-6" />
+            </div>
+          </div>
         ))}
-      </select>
-    </label>
-
-    {/* Month Dropdown (only shown for monthly calculation) */}
-    {calculationType === "monthly" && (
-      <label className="text-white">
-        Month:
-        <select
-          value={selectedMonth}
-          onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-          className="ml-2 bg-transparent text-white border-none focus:outline-none"
-        >
-          {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-            <option key={month} value={month} className="bg-blue-500">
-              {new Date(0, month - 1).toLocaleString('default', { month: 'long' })}
-            </option>
-          ))}
-        </select>
-      </label>
-    )}
-
-    {/* Apply and Clear Buttons */}
-    <button
-      onClick={() => setIsFilterApplied(true)}
-      className="bg-white text-blue-500 py-1 px-3 rounded-md hover:bg-gray-100 transition-colors"
-    >
-      Apply
-    </button>
-    <button
-      onClick={() => setIsFilterApplied(false)}
-      className="bg-white text-blue-500 py-1 px-3 rounded-md hover:bg-gray-100 transition-colors"
-    >
-      Clear
-    </button>
-  </div>
-</div>
-
-    {/* Main Content Section */}
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {/* Customer Risk Analysis Section */}
-      <div className="bg-white rounded-lg p-6 shadow-sm">
-        <h2 className="text-xl font-semibold mb-4">Customer Risk Analysis</h2>
-        <div className="space-y-4">
-          <div className="relative">
-            <input
-              type="text"
-              value={selectedCountry}
-              onChange={handleCountrySearch}
-              placeholder="Search country"
-              className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
-            />
-            {filteredCountries.length > 0 && (
-              <ul className="autocomplete-list mt-2 bg-white border border-gray-300 rounded-md shadow-lg">
-                {filteredCountries.map((country) => (
-                  <li
-                    key={country}
-                    onClick={() => {
-                      setSelectedCountry(country);
-                      setFilteredCountries([]);
-                    }}
-                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                  >
-                    {country}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          
-          <div className="relative">
-            <select
-              value={selectedOccupation}
-              onChange={(e) => setSelectedOccupation(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
-            >
-              <option value="">Select an Occupation</option>
-              {Object.keys(occupations).map((occupation) => (
-                <option key={occupation} value={occupation}>
-                  {occupation}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="relative">
-            <select
-              value={kycStatus}
-              onChange={(e) => setKycStatus(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
-            >
-              <option value="">Select KYC Status</option>
-              {Object.keys(kycScores).map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <button 
-            onClick={calculateCustomerRiskScore}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
-          >
-            Calculate Customer Risk Score
-          </button>
-        </div>
-        
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-800 font-medium">Customer Risk Score:</span>
-            <span className="text-3xl font-bold">{customerRiskScore !== null ? customerRiskScore.toFixed(2) : "N/A"}</span>
+  
+        {/* Bottom Logo */}
+        <div className="mt-auto mb-10 w-full flex justify-center">
+          <div className="bg-blue-700 w-12 h-12 rounded-full flex items-center justify-center">
+            <span className="text-white text-xl font-bold">X</span>
           </div>
         </div>
       </div>
-      
-      {/* Transaction Analysis Section */}
-      <div className="bg-white rounded-lg p-6 shadow-sm">
-        <h2 className="text-xl font-semibold mb-4">Transaction Analysis</h2>
-        <div className="space-y-4">
-          <input 
-            type="text" 
-            placeholder="Enter wallet address" 
-            value={inputAddress} 
-            onChange={(e) => setInputAddress(e.target.value)} 
-            className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
-          />
-          <button 
-            onClick={() => setAddress(inputAddress)}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
-          >
-            Fetch Transactions
-          </button>
-          
-          <div className="relative">
-            <select
-              value={annualIncomeRange}
-              onChange={(e) => setAnnualIncomeRange(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
+  
+      {/* Main Content */}
+      <div className="flex-1 p-8">
+        {/* Left Side Menu */}
+        <div className="mb-8">
+          <div className="bg-gray-100 rounded-full py-3 px-6 inline-block mb-6">
+            <h2 className="text-gray-700 font-medium">SecureX-ID</h2>
+          </div>
+          <div className="bg-white rounded-lg py-3 px-6 inline-block">
+            <h2 className="text-blue-700 font-medium">Risk Scoring Module</h2>
+          </div>
+        </div>
+  
+        <h1 className="text-3xl font-bold mb-8">Risk Scoring Module</h1>
+  
+        {/* Filter Section */}
+        <div className="flex justify-end mb-6">
+          <div className="flex items-center space-x-4 bg-blue-500 p-3 rounded-lg shadow-md">
+            {/* Calculation Type Dropdown */}
+            <label className="text-white">
+              Calculation Type:
+              <select
+                value={calculationType}
+                onChange={(e) => setCalculationType(e.target.value)}
+                className="ml-2 bg-blue-500 text-white border-none focus:outline-none"
+              >
+                <option value="monthly">Monthly</option>
+                <option value="annual">Annual</option>
+              </select>
+            </label>
+  
+            {/* Year Dropdown */}
+            <label className="text-white">
+              Year:
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                className="ml-2 bg-transparent text-white border-none focus:outline-none"
+              >
+                {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                  <option key={year} value={year} className="bg-blue-500">
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </label>
+  
+            {/* Month Dropdown (only shown for monthly calculation) */}
+            {calculationType === "monthly" && (
+              <label className="text-white">
+                Month:
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                  className="ml-2 bg-transparent text-white border-none focus:outline-none"
+                >
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                    <option key={month} value={month} className="bg-blue-500">
+                      {new Date(0, month - 1).toLocaleString('default', { month: 'long' })}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+  
+            {/* Apply and Clear Buttons */}
+            <button
+              onClick={() => setIsFilterApplied(true)}
+              className="bg-white text-blue-500 py-1 px-3 rounded-md hover:bg-gray-100 transition-colors"
             >
-              <option value="">Select Income Range</option>
-              {Object.keys(incomeRanges).map((range) => (
-                <option key={range} value={range}>
-                  {range}
-                </option>
-              ))}
-            </select>
+              Apply
+            </button>
+            <button
+              onClick={() => setIsFilterApplied(false)}
+              className="bg-white text-blue-500 py-1 px-3 rounded-md hover:bg-gray-100 transition-colors"
+            >
+              Clear
+            </button>
           </div>
-          
-          {annualIncomeRange && (
-  <div className="mt-4">
-    <p className="text-lg font-semibold">
-      {calculationType === "annual" ? "Annual" : "Monthly"} Threshold: $
-      {calculationType === "annual"
-        ? (
-            (incomeRanges[annualIncomeRange][0] + incomeRanges[annualIncomeRange][1]) / 2 * 0.33
-          ).toFixed(2)
-        : (
-            ((incomeRanges[annualIncomeRange][0] + incomeRanges[annualIncomeRange][1]) / 2 * 0.33 / 12
-          ).toFixed(2))}
-    </p>
-  </div>
-)}
-          
-          <div className="mt-4">
-            <p className="text-lg font-semibold">
-              Total USD Value: ${totalUSDValue.toFixed(2)}
-            </p>
-          </div>
-          
-          {transactionRiskScore !== null && (
-            <div className="mt-6">
-              <h3 className="text-xl font-semibold mb-4">Transaction Risk Breakdown</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="font-medium">Transaction Frequency Risk:</span>
-                  <span>{riskLevel}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Transaction Amount Variance Risk:</span>
-                  <span>{varianceRisk}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Time Gap Consistency:</span>
-                  <span>{timeGapConsistency}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Transaction Direction Risk:</span>
-                  <span>{directionRisk}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Cross-Wallet Behavior Risk:</span>
-                  <span>{crossWalletRisk}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Circular Transaction Volume Risk:</span>
-                  <span>{circularRisk}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Threshold Risk:</span>
-                  <span>{thresholdRisk}</span>
-                </div>
+        </div>
+  
+        {/* Main Content Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Customer Risk Analysis Section */}
+          <div className="bg-white rounded-lg p-6 shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">Customer Risk Analysis</h2>
+            <div className="space-y-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={selectedCountry}
+                  onChange={handleCountrySearch}
+                  placeholder="Search country"
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
+                />
+                {filteredCountries.length > 0 && (
+                  <ul className="autocomplete-list mt-2 bg-white border border-gray-300 rounded-md shadow-lg">
+                    {filteredCountries.map((country) => (
+                      <li
+                        key={country}
+                        onClick={() => {
+                          setSelectedCountry(country);
+                          setFilteredCountries([]);
+                        }}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                      >
+                        {country}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-              <div className="mt-6">
-                <p className="text-lg font-semibold">Transaction Risk Score: {transactionRiskScore}</p>
+              
+              <div className="relative">
+                <select
+                  value={selectedOccupation}
+                  onChange={(e) => setSelectedOccupation(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
+                >
+                  <option value="">Select an Occupation</option>
+                  {Object.keys(occupations).map((occupation) => (
+                    <option key={occupation} value={occupation}>
+                      {occupation}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="relative">
+                <select
+                  value={kycStatus}
+                  onChange={(e) => setKycStatus(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
+                >
+                  <option value="">Select KYC Status</option>
+                  {Object.keys(kycScores).map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <button 
+                onClick={calculateCustomerRiskScore}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
+              >
+                Calculate Customer Risk Score
+              </button>
+            </div>
+            
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-800 font-medium">Customer Risk Score:</span>
+                <span className="text-3xl font-bold">{customerRiskScore !== null ? customerRiskScore.toFixed(2) : "N/A"}</span>
               </div>
             </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Behavioral Analysis Section */}
-      <div className="bg-white rounded-lg p-6 shadow-sm">
-        <h2 className="text-xl font-semibold mb-4">Behavioral Analysis</h2>
-        <div className="space-y-4">
-          <div className="relative">
-            <select
-              value={transactionBehavior}
-              onChange={(e) => setTransactionBehavior(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
-            >
-              <option value="">Select a Behavior</option>
-              {Object.keys(behaviorScores).map((behavior) => (
-                <option key={behavior} value={behavior}>
-                  {behavior}
-                </option>
-              ))}
-            </select>
           </div>
           
-          <button 
-            onClick={calculateBehavioralRiskScore}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
-          >
-            Calculate Behavioral Risk Score
-          </button>
+          {/* Transaction Analysis Section */}
+          <div className="bg-white rounded-lg p-6 shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">Transaction Analysis</h2>
+            <div className="space-y-4">
+              <input 
+                type="text" 
+                placeholder="Enter wallet address" 
+                value={inputAddress} 
+                onChange={(e) => setInputAddress(e.target.value)} 
+                className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
+              />
+              <button 
+                onClick={() => setAddress(inputAddress)}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
+              >
+                Fetch Transactions
+              </button>
+              
+              <div className="relative">
+                <select
+                  value={annualIncomeRange}
+                  onChange={(e) => setAnnualIncomeRange(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
+                >
+                  <option value="">Select Income Range</option>
+                  {Object.keys(incomeRanges).map((range) => (
+                    <option key={range} value={range}>
+                      {range}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              {annualIncomeRange && (
+                <div className="mt-4">
+                  <p className="text-lg font-semibold">
+                    {calculationType === "annual" ? "Annual" : "Monthly"} Threshold: $
+                    {calculationType === "annual"
+                      ? (
+                          (incomeRanges[annualIncomeRange][0] + incomeRanges[annualIncomeRange][1]) / 2 * 0.33
+                        ).toFixed(2)
+                      : (
+                          ((incomeRanges[annualIncomeRange][0] + incomeRanges[annualIncomeRange][1]) / 2 * 0.33 / 12
+                        ).toFixed(2))}
+                  </p>
+                </div>
+              )}
+              
+              <div className="mt-4">
+                <p className="text-lg font-semibold">
+                  Total USD Value: ${totalUSDValue.toFixed(2)}
+                </p>
+              </div>
+              
+              {transactionRiskScore !== null && (
+                <div className="mt-6">
+                  <h3 className="text-xl font-semibold mb-4">Transaction Risk Breakdown</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Transaction Frequency Risk:</span>
+                      <span>{riskLevel}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Transaction Amount Variance Risk:</span>
+                      <span>{varianceRisk}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Time Gap Consistency:</span>
+                      <span>{timeGapConsistency}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Transaction Direction Risk:</span>
+                      <span>{directionRisk}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Cross-Wallet Behavior Risk:</span>
+                      <span>{crossWalletRisk}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Circular Transaction Volume Risk:</span>
+                      <span>{circularRisk}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Threshold Risk:</span>
+                      <span>{thresholdRisk}</span>
+                    </div>
+                  </div>
+                  <div className="mt-6">
+                    <p className="text-lg font-semibold">Transaction Risk Score: {transactionRiskScore}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Behavioral Analysis Section */}
+          <div className="bg-white rounded-lg p-6 shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">Behavioral Analysis</h2>
+            <div className="space-y-4">
+              <div className="relative">
+                <select
+                  value={transactionBehavior}
+                  onChange={(e) => setTransactionBehavior(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
+                >
+                  <option value="">Select a Behavior</option>
+                  {Object.keys(behaviorScores).map((behavior) => (
+                    <option key={behavior} value={behavior}>
+                      {behavior}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <button 
+                onClick={calculateBehavioralRiskScore}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
+              >
+                Calculate Behavioral Risk Score
+              </button>
+            </div>
+            
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-800 font-medium">Behavioral Risk Score:</span>
+                <span className="text-3xl font-bold">{behavioralRiskScore !== null ? behavioralRiskScore : "N/A"}</span>
+              </div>
+            </div>
+          </div>
         </div>
         
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-800 font-medium">Behavioral Risk Score:</span>
-            <span className="text-3xl font-bold">{behavioralRiskScore !== null ? behavioralRiskScore : "N/A"}</span>
+        {/* X-ID Score Section */}
+        <div className="mt-10 border-2 border-dashed border-gray-300 rounded-lg p-6">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <button 
+              onClick={aggregateResults}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200"
+            >
+              Get X-ID Result
+            </button>
+            
+            <div className="mt-4 md:mt-0 flex items-center">
+              <div className="mr-4">
+                <span className="font-semibold">X-ID Score: {aggregateScore !== null ? aggregateScore.toFixed(2) : "N/A"}</span>
+              </div>
+              <div>
+                <p className="text-green-500 font-medium">{getQuote(aggregateScore)}</p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-    
-    {/* X-ID Score Section */}
-    <div className="mt-10 border-2 border-dashed border-gray-300 rounded-lg p-6">
-      <div className="flex flex-col md:flex-row justify-between items-center">
-        <button 
-          onClick={aggregateResults}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200"
-        >
-          Get X-ID Result
-        </button>
         
-        <div className="mt-4 md:mt-0 flex items-center">
-          <div className="mr-4">
-            <span className="font-semibold">X-ID Score: {aggregateScore !== null ? aggregateScore.toFixed(2) : "N/A"}</span>
-          </div>
-          <div>
-            <p className="text-green-500 font-medium">{getQuote(aggregateScore)}</p>
+        {/* Transaction Details Section */}
+        <div className="mt-8 bg-white rounded-lg p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold mb-4">Transaction Details</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white border border-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Hash</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">To</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value (USD)</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {transactions.map((tx, index) => (
+                  <tr key={index} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {tx.metadata?.blockTimestamp ? new Date(tx.metadata.blockTimestamp).toISOString().split("T")[0] : "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {tx.hash?.slice(0, 10)}...
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {tx.from}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {tx.to}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ${tx.usdValue?.toFixed(20) || "0.00"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {tx.asset || "Unknown"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
     </div>
-    
-    {/* Transaction Details Section */}
-    <div className="mt-8 bg-white rounded-lg p-6 shadow-sm">
-      <h2 className="text-2xl font-semibold mb-4">Transaction Details</h2>
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Hash</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">To</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value (USD)</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {transactions.map((tx, index) => (
-              <tr key={index} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {tx.metadata?.blockTimestamp ? new Date(tx.metadata.blockTimestamp).toISOString().split("T")[0] : "N/A"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {tx.hash?.slice(0, 10)}...
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {tx.from}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {tx.to}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  ${tx.usdValue?.toFixed(20) || "0.00"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {tx.asset || "Unknown"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-    );
+  );
 };
 export default DashBoard;
+
+
+
+
+
+
+
+

@@ -4,7 +4,7 @@ import AuthPage from './pages/AuthPage';
 import KycPage from './pages/KycPage';
 import DashBoard from './components/DashBoard';
 import Loader from './components/Loader';
-
+import AdminDashBoard from "./pages/AdminDashBoard"
 const App = () => {
   const [loading, setLoading] = useState(false);
   const location = useLocation(); // Now this will work
@@ -25,6 +25,7 @@ const App = () => {
         <Route path="/" element={<AuthPage />} />
         <Route path="/kyc" element={<KycPage />} />
         <Route path="/dashboard" element={<DashBoard />} />
+        <Route path="/admin-dashboard" element={<AdminDashBoard />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </>

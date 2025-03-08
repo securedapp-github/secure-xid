@@ -7,9 +7,27 @@ const AdminDashBoard = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch('https://api.example.com/users'); // Replace with your API endpoint
+        const token = localStorage.getItem('authToken'); // Get the token from localStorage
+        if (!token) {
+          console.error('No token found');
+          return;
+        }
+
+        const response = await fetch('https://119a-38-183-11-215.ngrok-free.app/admin/users', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`, // Include the Bearer token
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch users');
+        }
+        
         const data = await response.json();
         setUsers(data);
+        console.log('Fetched users:', data);
       } catch (error) {
         console.error('Error fetching users:', error);
       }
@@ -18,12 +36,24 @@ const AdminDashBoard = () => {
     fetchUsers();
   }, []);
 
+
   // Handle KYC approval
   const handleApprove = async (userId) => {
     try {
+      const token = localStorage.getItem('authToken'); // Get the token from localStorage
+      if (!token) {
+        console.error('No token found');
+        return;
+      }
+
       const response = await fetch(`https://api.example.com/users/${userId}/approve`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`, // Include the Bearer token
+          'Content-Type': 'application/json',
+        },
       });
+
       if (response.ok) {
         // Update the user's KYC status in the local state
         setUsers((prevUsers) =>
@@ -42,9 +72,20 @@ const AdminDashBoard = () => {
   // Handle KYC rejection
   const handleReject = async (userId) => {
     try {
+      const token = localStorage.getItem('authToken'); // Get the token from localStorage
+      if (!token) {
+        console.error('No token found');
+        return;
+      }
+
       const response = await fetch(`https://api.example.com/users/${userId}/reject`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`, // Include the Bearer token
+          'Content-Type': 'application/json',
+        },
       });
+
       if (response.ok) {
         // Update the user's KYC status in the local state
         setUsers((prevUsers) =>
@@ -96,29 +137,29 @@ const AdminDashBoard = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={user.userDetails.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {user.name}
+                    {user.userDetails.fullName}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {user.walletAddress}
+                    {user.kycDetails.walletAddress}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {user.kycStatus}
+                    {user.kycDetails.status}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => handleApprove(user.id)}
+                        onClick={() => handleApprove(user.userDetails.id)}
                         className="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 transition-colors"
-                        disabled={user.kycStatus === 'verified'}
+                        disabled={user.kycDetails.status === 'verified'}
                       >
                         Approve
                       </button>
                       <button
-                        onClick={() => handleReject(user.id)}
+                        onClick={() => handleReject(user.userDetails.id)}
                         className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition-colors"
-                        disabled={user.kycStatus === 'rejected'}
+                        disabled={user.kycDetails.status === 'rejected'}
                       >
                         Reject
                       </button>

@@ -181,7 +181,7 @@ const Login = ({ toggleForm, onForgotPassword }) => {
       if (response.ok) {
         toast.success("Login successful!");
         localStorage.setItem("authToken", data.token);
-  
+       console.log(data.token);
         // Delay navigation to allow the toast to be displayed
         setTimeout(() => {
           navigate("/kyc");

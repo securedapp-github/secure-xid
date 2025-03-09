@@ -34,7 +34,7 @@ const Signup = ({ toggleForm }) => {
 
     try {
       const response = await fetch(
-        "https://3f2f-38-183-11-215.ngrok-free.app/signup",
+        "https://0x-idbackend.vercel.app/signup",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -58,7 +58,7 @@ const Signup = ({ toggleForm }) => {
   const handleVerifyOtp = async () => {
     try {
       const response = await fetch(
-        "https://3f2f-38-183-11-215.ngrok-free.app/verify-otp",
+        "https://0x-idbackend.vercel.app/verify-otp",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -169,7 +169,7 @@ const Login = ({ toggleForm, onForgotPassword }) => {
     e.preventDefault();
     try {
       const response = await fetch(
-        "https://119a-38-183-11-215.ngrok-free.app/login",
+        "https://0x-idbackend.vercel.app/login",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -249,7 +249,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
   const handleSendOtp = async () => {
     try {
       const response = await fetch(
-        "https://3f2f-38-183-11-215.ngrok-free.app/forgot-password",
+        "https://0x-idbackend.vercel.app/forgot-password",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -280,7 +280,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
   
     try {
       const response = await fetch(
-        "https://89ef-38-183-11-215.ngrok-free.app/reset-password",
+        "https://0x-idbackend.vercel.app/reset-password",
         {
           method: "POST",
           headers: {

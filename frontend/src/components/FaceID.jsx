@@ -44,7 +44,7 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
     try {
       const token = localStorage.getItem("authToken");
       const response = await axios.get(
-        `https://119a-38-183-11-215.ngrok-free.app/user-role/${userId}`,
+        `https://0x-idbackend.vercel.app/user-role/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -90,7 +90,7 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
         formData.append("wallet_address", walletAddress);
 
         const response = await axios.post(
-          "https://119a-38-183-11-215.ngrok-free.app/upload-kyc",
+          "https://0x-idbackend.vercel.app/upload-kyc",
           formData,
           {
             headers: {

@@ -37,9 +37,9 @@ const AdminDashBoard = () => {
         }
 
         const data = await response.json();
-        setUsers(data);
-        setFilteredUsers(data); // Initialize filtered users with all users
-        console.log('Fetched users:', data);
+        setUsers(data.users); // Access the `users` array from the response
+        setFilteredUsers(data.users); // Initialize filtered users with all users
+        console.log('Fetched users:', data.users);
       } catch (error) {
         console.error('Error fetching users:', error);
       }
@@ -109,12 +109,16 @@ const AdminDashBoard = () => {
         // Update the user's KYC status in the local state
         setUsers((prevUsers) =>
           prevUsers.map((user) =>
-            user.id === userId ? { ...user, kycStatus: 'verified' } : user
+            user.userDetails.id === userId
+              ? { ...user, kycDetails: { ...user.kycDetails, status: 'verified' } }
+              : user
           )
         );
         setFilteredUsers((prevUsers) =>
           prevUsers.map((user) =>
-            user.id === userId ? { ...user, kycStatus: 'verified' } : user
+            user.userDetails.id === userId
+              ? { ...user, kycDetails: { ...user.kycDetails, status: 'verified' } }
+              : user
           )
         );
       } else {
@@ -146,12 +150,16 @@ const AdminDashBoard = () => {
         // Update the user's KYC status in the local state
         setUsers((prevUsers) =>
           prevUsers.map((user) =>
-            user.id === userId ? { ...user, kycStatus: 'rejected' } : user
+            user.userDetails.id === userId
+              ? { ...user, kycDetails: { ...user.kycDetails, status: 'rejected' } }
+              : user
           )
         );
         setFilteredUsers((prevUsers) =>
           prevUsers.map((user) =>
-            user.id === userId ? { ...user, kycStatus: 'rejected' } : user
+            user.userDetails.id === userId
+              ? { ...user, kycDetails: { ...user.kycDetails, status: 'rejected' } }
+              : user
           )
         );
       } else {
@@ -307,9 +315,6 @@ const AdminDashBoard = () => {
                       KYC Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      X-ID Score
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -325,9 +330,6 @@ const AdminDashBoard = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {user.kycDetails.status}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {user.xidScore || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <div className="flex space-x-2">

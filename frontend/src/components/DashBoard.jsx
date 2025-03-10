@@ -307,7 +307,7 @@ const DashBoard = () => {
 
         // Fetch profile data
         const response = await axios.get(
-          `https://0x-idbackend.vercel.app/kyc-status/${userId}`,
+          `https://7571-38-183-11-158.ngrok-free.app/kyc-status/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

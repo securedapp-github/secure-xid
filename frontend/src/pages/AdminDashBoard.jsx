@@ -24,7 +24,7 @@ const AdminDashBoard = () => {
           return;
         }
 
-        const response = await fetch('https://7571-38-183-11-158.ngrok-free.app/admin/users', {
+        const response = await fetch('http://localhost:3000/admin/users', {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`, // Include the Bearer token
@@ -92,12 +92,13 @@ const AdminDashBoard = () => {
   const handleApprove = async (userId) => {
     try {
       const token = localStorage.getItem('authToken');
+      console.log(token)
       if (!token) {
         console.error('No token found');
         return;
       }
-
-      const response = await fetch(`https://7571-38-183-11-158.ngrok-free.app/users/${userId}/approve`, {
+      console.log(userId)
+      const response = await fetch(`http://localhost:3000/users/${userId}/approve`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -138,7 +139,7 @@ const AdminDashBoard = () => {
         return;
       }
 
-      const response = await fetch(`https://7571-38-183-11-158.ngrok-free.app/users/${userId}/reject`, {
+      const response = await fetch(`http://localhost:3000/users/${userId}/reject`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

@@ -324,40 +324,40 @@ const AdminDashBoard = () => {
       </tr>
     </thead>
     <tbody className="divide-y divide-gray-200">
-      {filteredUsers.map((user) => (
-        <tr key={user.userDetails.id} className="hover:bg-gray-50 transition-colors">
-          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-            {user.userDetails.fullName}
-          </td>
-          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-            {user.kycDetails.walletAddress}
-          </td>
-          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-            {user.kycDetails.status}
-          </td>
-          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-            {user.securexid_score || 'N/A'}
-          </td>
-          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-            <div className="flex space-x-2">
-              <button
-                onClick={() => handleApprove(user.userDetails.id)}
-                className="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 transition-colors"
-                disabled={user.kycDetails.status === 'verified'}
-              >
-                Approve
-              </button>
-              <button
-                onClick={() => handleReject(user.userDetails.id)}
-                className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition-colors"
-                disabled={user.kycDetails.status === 'rejected'}
-              >
-                Reject
-              </button>
-            </div>
-          </td>
-        </tr>
-      ))}
+    {filteredUsers.map((user) => (
+  <tr key={user.userDetails.id} className="hover:bg-gray-50 transition-colors">
+    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      {user.userDetails.fullName}
+    </td>
+    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      {user.kycDetails.walletAddress}
+    </td>
+    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      {user.kycDetails.status}
+    </td>
+    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      {user.securexid_score ? user.securexid_score : 'N/A'}
+    </td>
+    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      <div className="flex space-x-2">
+        <button
+          onClick={() => handleApprove(user.userDetails.id)}
+          className="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 transition-colors"
+          disabled={user.kycDetails.status === 'verified'}
+        >
+          Approve
+        </button>
+        <button
+          onClick={() => handleReject(user.userDetails.id)}
+          className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition-colors"
+          disabled={user.kycDetails.status === 'rejected'}
+        >
+          Reject
+        </button>
+      </div>
+    </td>
+  </tr>
+))}
     </tbody>
   </table>
 </div>

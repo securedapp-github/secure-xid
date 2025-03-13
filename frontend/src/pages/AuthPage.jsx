@@ -168,25 +168,22 @@ const Login = ({ toggleForm, onForgotPassword }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      console.log(process.env.REACT_APP_API_BASE_URL);
-      const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        }
-      );
+      const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
+      console.log("API Base URL:", apiBaseUrl); // Debugging line
+      const response = await fetch(`${apiBaseUrl}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
       const data = await response.json();
   
       if (response.ok) {
         toast.success("Login successful!");
         localStorage.setItem("authToken", data.token);
-       console.log(data.token);
-        // Delay navigation to allow the toast to be displayed
+        console.log(data.token);
         setTimeout(() => {
           navigate("/kyc");
-        }, 2000); // 2000 milliseconds (2 seconds) delay
+        }, 2000); // 2 seconds delay
       } else {
         toast.error(data.message || "Login failed");
       }

@@ -284,7 +284,36 @@ const DashBoard = () => {
     status: "",
     wallet_address: "",
   });
-
+ 
+  const updateSecureXIDScore = async (score) => {
+    const token = localStorage.getItem("authToken");
+  
+    if (!token) {
+      toast.error("No token found, please log in.");
+      return;
+    }
+  
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/update-securexid-score`,
+        { score },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      if (response.status === 200) {
+        toast.success("SecureXID score updated successfully!");
+      } else {
+        toast.error("Failed to update SecureXID score.");
+      }
+    } catch (error) {
+      console.error("Error updating SecureXID score:", error);
+      toast.error("An error occurred. Please try again.");
+    }
+  };
   // Fetch profile data on component mount
   useEffect(() => {
     const fetchProfile = async () => {
@@ -721,8 +750,7 @@ const DashBoard = () => {
       { score: customerRiskScore, weight: 0.3 }, // 30% weight
       { score: behavioralRiskScore, weight: 0.2 }, // 20% weight
     ].filter((entry) => entry.score !== null); // Filter out null scores
-    console.log(scores);
-
+  
     // Check if all required scores are available
     if (scores.length === 3) {
       // Calculate the weighted score
@@ -730,12 +758,15 @@ const DashBoard = () => {
         (sum, { score, weight }) => sum + score * weight,
         0
       );
-
+  
       // Scale the score to 1000
       const scaledScore = weightedScore * 10; // Scale to 1000
-
+  
       // Set the aggregate score
       setAggregateScore(scaledScore);
+  
+      // Call the API to update the SecureXID score
+      updateSecureXIDScore(scaledScore);
     } else {
       // Alert if any score is missing
       alert("Please calculate all scores before aggregating.");
@@ -1087,12 +1118,12 @@ const DashBoard = () => {
         {/* X-ID Score Section */}
         <div className="mt-10 border-2 border-dashed border-gray-300 rounded-lg p-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <button 
-              onClick={aggregateResults}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200"
-            >
-              Get X-ID Result
-            </button>
+          <button 
+  onClick={aggregateResults}
+  className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200"
+>
+  Get X-ID Result
+</button>
             
             <div className="mt-4 md:mt-0 flex items-center">
               <div className="mr-4">

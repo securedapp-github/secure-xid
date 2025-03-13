@@ -58,7 +58,7 @@ const Signup = ({ toggleForm }) => {
   const handleVerifyOtp = async () => {
     try {
       const response = await fetch(
-        "https://7571-38-183-11-158.ngrok-free.app/verify-otp",
+       `${process.env.REACT_APP_API_BASE_URL}/verify-otp`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -168,6 +168,7 @@ const Login = ({ toggleForm, onForgotPassword }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      console.log(process.env.REACT_APP_API_BASE_URL);
       const response = await fetch(
         `${process.env.REACT_APP_API_BASE_URL}/login`,
         {

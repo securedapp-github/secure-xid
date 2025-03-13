@@ -33,8 +33,8 @@ const Signup = ({ toggleForm }) => {
     }
 
     try {
-      const response = await fetch(
-        "https://7571-38-183-11-158.ngrok-free.app/signup",
+     const response = await fetch(
+      `${process.env.REACT_APP_API_BASE_URL}/signup`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -169,7 +169,7 @@ const Login = ({ toggleForm, onForgotPassword }) => {
     e.preventDefault();
     try {
       const response = await fetch(
-        "https://acef-38-183-11-158.ngrok-free.app/login",
+        `${process.env.REACT_APP_API_BASE_URL}/login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -249,7 +249,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
   const handleSendOtp = async () => {
     try {
       const response = await fetch(
-        "https://7571-38-183-11-158.ngrok-free.app/forgot-password",
+        `${process.env.REACT_APP_API_BASE_URL}/login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

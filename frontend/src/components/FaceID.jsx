@@ -44,7 +44,7 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
     try {
       const token = localStorage.getItem("authToken");
       const response = await axios.get(
-        `https://7571-38-183-11-158.ngrok-free.app/user-role/${userId}`,
+        `${process.env.REACT_APP_API_BASE_URL}/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -90,7 +90,7 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
         formData.append("wallet_address", walletAddress);
 
         const response = await axios.post(
-          "https://7571-38-183-11-158.ngrok-free.app/upload-kyc",
+          `${process.env.REACT_APP_API_BASE_URL}/upload-kyc`,
           formData,
           {
             headers: {

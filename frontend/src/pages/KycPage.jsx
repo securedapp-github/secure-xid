@@ -37,7 +37,6 @@ function KycPage() {
         {step === 'verify' && <VerifyDocument onNext={handleNext} onBack={handleBack} />}
         {step === 'upload' && <UploadDocument onNext={handleNext} onBack={handleBack} onFileUpload={handleFileUpload} />}
         {step === 'camera' && <FaceId onBack={handleBack} frontFile={frontImage} backFile={backImage} />}
-
       </Layout>
     </div>
   );

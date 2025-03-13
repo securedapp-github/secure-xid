@@ -1107,6 +1107,135 @@ app.post('/reset-password', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+// // 12. Get All Users (Admin Only)
+// app.get('/admin/users', verifyToken, async (req, res) => {
+//   if (!req.user.is_admin) {
+//     return res.status(403).json({ error: 'Access denied. Admins only.' });
+//   }
+
+//   try {
+//     const [users] = await db.query(`
+//       SELECT 
+//         u.id AS userId,
+//         u.full_name,
+//         k.wallet_address,
+//         k.status AS kycStatus
+//       FROM users u
+//       LEFT JOIN kyc k ON u.id = k.user_id
+//       ORDER BY u.created_at DESC
+//     `);
+
+//     const formattedUsers = users.map(user => ({
+//       userDetails: {
+//         id: user.userId,
+//         fullName: user.full_name,
+//       },
+//       kycDetails: {
+//         walletAddress: user.wallet_address || 'Not submitted',
+//         status: user.kycStatus || 'not_submitted'
+//       },
+//       action: getKycAction(user.kycStatus)
+//     }));
+
+//     res.status(200).json({ users: formattedUsers });
+//   } catch (error) {
+//     console.error('Get users error:', error);
+//     res.status(500).json({ error: 'Server error' });
+//   }
+// });
+
+// // Helper function to determine actions
+// const getKycAction = (status) => {
+//   switch (status) {
+//     case 'pending':
+//       return { label: 'Review KYC' };
+//     case 'approved':
+//       return { label: 'View Details' };
+//     case 'rejected':
+//       return { label: 'Re-submit Required' };
+//     default:
+//       return { label: 'Submit KYC' };
+//   }
+// };
+
+// // Approve KYC
+// app.post('/users/:userId/approve', verifyToken, async (req, res) => {
+//   try {
+    
+//     const { userId } = req.params;
+    
+//     const status = 'verified';
+
+//     // Check if user exists
+//     const [userCheck] = await db.query('SELECT user_id FROM kyc WHERE user_id = ?', [userId]);
+//     if (userCheck.length === 0) {
+//       return res.status(404).json({ message: 'User not found' });
+//     }
+
+//     // If user exists, proceed to update the status
+//     const [rows] = await db.query('UPDATE kyc SET status = ? WHERE user_id = ?', [status, userId]);
+
+//     // Check if the update was successful
+//     if (rows.affectedRows === 0) {
+//       return res.status(404).json({ message: 'Failed to approve KYC' });
+//     }
+
+//     res.json({ message: 'User KYC approved' });
+//   } catch (error) {
+//     console.error(error); // Log the error for debugging purposes
+//     res.status(500).json({ message: 'Server error', error });
+//   }
+// });
+
+// // Reject KYC
+// app.post('/users/:userId/reject', verifyToken, async (req, res) => {
+//   try {
+//     const { userId } = req.params;
+
+//     // Check if user exists
+//     const [userCheck] = await db.query('SELECT user_id FROM kyc WHERE user_id = ?', [userId]);
+//     if (userCheck.length === 0) {
+//       return res.status(404).json({ message: 'User not found' });
+//     }
+
+//     // If user exists, proceed to update the status
+//     const result = await db.query('UPDATE kyc SET status = ? WHERE user_id = ?', ['rejected', userId]);
+
+//     // Check if the update was successful
+//     if (result[0].affectedRows === 0) {
+//       return res.status(404).json({ message: 'Failed to reject KYC' });
+//     }
+
+//     res.json({ message: 'User KYC rejected' });
+//   } catch (error) {
+//     console.error(error); // Log the error for debugging purposes
+//     res.status(500).json({ message: 'Server error', error });
+//   }
+// });
+
+// app.get('/user-role/:userId', verifyToken, async (req, res) => {
+//   try {
+//     const { userId } = req.params;
+
+//     // Query to fetch 'is_admin' from the database for the given user
+//     const [user] = await db.query('SELECT is_admin FROM users WHERE id = ?', [userId]);
+
+//     if (user.length === 0) {
+//       return res.status(404).json({ message: 'User not found' });
+//     }
+
+//     // Check the value of 'is_admin' and set the role accordingly
+//     const role = user[0].is_admin === 1 ? 'admin' : 'user';
+
+//     // Respond with the user's role
+//     res.json({ role });
+//   } catch (error) {
+//     console.error("Error fetching user role:", error);
+//     res.status(500).json({ message: 'Server error', error });
+//   }
+// });
+
+
 // 12. Get All Users (Admin Only)
 app.get('/admin/users', verifyToken, async (req, res) => {
   if (!req.user.is_admin) {
@@ -1118,6 +1247,7 @@ app.get('/admin/users', verifyToken, async (req, res) => {
       SELECT 
         u.id AS userId,
         u.full_name,
+        u.securexid_score,
         k.wallet_address,
         k.status AS kycStatus
       FROM users u
@@ -1129,6 +1259,7 @@ app.get('/admin/users', verifyToken, async (req, res) => {
       userDetails: {
         id: user.userId,
         fullName: user.full_name,
+        securexidScore: user.securexid_score || 0, // Default to 0 if score is null
       },
       kycDetails: {
         walletAddress: user.wallet_address || 'Not submitted',
@@ -1157,83 +1288,6 @@ const getKycAction = (status) => {
       return { label: 'Submit KYC' };
   }
 };
-
-// Approve KYC
-app.post('/users/:userId/approve', verifyToken, async (req, res) => {
-  try {
-    
-    const { userId } = req.params;
-    
-    const status = 'verified';
-
-    // Check if user exists
-    const [userCheck] = await db.query('SELECT user_id FROM kyc WHERE user_id = ?', [userId]);
-    if (userCheck.length === 0) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // If user exists, proceed to update the status
-    const [rows] = await db.query('UPDATE kyc SET status = ? WHERE user_id = ?', [status, userId]);
-
-    // Check if the update was successful
-    if (rows.affectedRows === 0) {
-      return res.status(404).json({ message: 'Failed to approve KYC' });
-    }
-
-    res.json({ message: 'User KYC approved' });
-  } catch (error) {
-    console.error(error); // Log the error for debugging purposes
-    res.status(500).json({ message: 'Server error', error });
-  }
-});
-
-// Reject KYC
-app.post('/users/:userId/reject', verifyToken, async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    // Check if user exists
-    const [userCheck] = await db.query('SELECT user_id FROM kyc WHERE user_id = ?', [userId]);
-    if (userCheck.length === 0) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // If user exists, proceed to update the status
-    const result = await db.query('UPDATE kyc SET status = ? WHERE user_id = ?', ['rejected', userId]);
-
-    // Check if the update was successful
-    if (result[0].affectedRows === 0) {
-      return res.status(404).json({ message: 'Failed to reject KYC' });
-    }
-
-    res.json({ message: 'User KYC rejected' });
-  } catch (error) {
-    console.error(error); // Log the error for debugging purposes
-    res.status(500).json({ message: 'Server error', error });
-  }
-});
-
-app.get('/user-role/:userId', verifyToken, async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    // Query to fetch 'is_admin' from the database for the given user
-    const [user] = await db.query('SELECT is_admin FROM users WHERE id = ?', [userId]);
-
-    if (user.length === 0) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Check the value of 'is_admin' and set the role accordingly
-    const role = user[0].is_admin === 1 ? 'admin' : 'user';
-
-    // Respond with the user's role
-    res.json({ role });
-  } catch (error) {
-    console.error("Error fetching user role:", error);
-    res.status(500).json({ message: 'Server error', error });
-  }
-});
 
 
 // Start Server

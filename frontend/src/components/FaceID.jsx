@@ -13,7 +13,7 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
   const [isPhotoConfirmed, setIsPhotoConfirmed] = useState(false);
   const [isWalletConnected, setIsWalletConnected] = useState(false); // Track wallet connection
   const navigate = useNavigate();
-  const REACT_APP_API_BASE_URL=process.env.REACT_APP_API_BASE_URL;
+  const VITE_API_BASE_URL=import.meta.env.VITE_API_BASE_URL
   // Capture photo
   const capture = () => {
     const imageSrc = webcamRef.current.getScreenshot();
@@ -44,7 +44,7 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
     try {
       const token = localStorage.getItem("authToken");
       const response = await axios.get(
-        `${REACT_APP_API_BASE_URL}/${userId}`,
+        `${VITE_API_BASE_URL}/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -90,7 +90,7 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
         formData.append("wallet_address", walletAddress);
 
         const response = await axios.post(
-          `${REACT_APP_API_BASE_URL}/upload-kyc`,
+          `${VITE_API_BASE_URL}/upload-kyc`,
           formData,
           {
             headers: {

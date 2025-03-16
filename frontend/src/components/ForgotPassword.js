@@ -6,11 +6,11 @@ const ForgotPassword = ({ onBackToLogin }) => {
   const [newPassword, setNewPassword] = useState("");
   const [step, setStep] = useState(1); // 1: Enter Email, 2: Enter OTP, 3: Enter New Password
   const [message, setMessage] = useState("");
-
+  const VITE_API_BASE_URL=import.meta.env.VITE_API_BASE_URL;
   const handleSendOtp = async () => {
     try {
       const response = await fetch(
-       `${process.env.REACT_APP_API_BASE_URL}/forgot-password`,
+       `${VITE_API_BASE_URL}/forgot-password`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -34,7 +34,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
   const handleVerifyOtp = async () => {
     try {
       const response = await fetch(
-       `${process.env.REACT_APP_API_BASE_URL}/verify-otp`,
+       `${VITE_API_BASE_URL}/verify-otp`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -58,7 +58,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
   const handleResetPassword = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/reset-password`,
+        `${VITE_API_BASE_URL}/reset-password`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -14,7 +14,7 @@ const Signup = ({ toggleForm }) => {
   });
   const [otp, setOtp] = useState("");
   const [isOtpSent, setIsOtpSent] = useState(false);
-  const REACT_APP_API_BASE_URL=process.env.REACT_APP_API_BASE_URL;
+  const VITE_API_BASE_URL=import.meta.env.VITE_API_BASE_URL;
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -34,7 +34,7 @@ const Signup = ({ toggleForm }) => {
 
     try {
      const response = await fetch(
-      `${REACT_APP_API_BASE_URL}/signup`,
+      `${VITE_API_BASE_URL}/signup`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -58,7 +58,7 @@ const Signup = ({ toggleForm }) => {
   const handleVerifyOtp = async () => {
     try {
       const response = await fetch(
-       `${REACT_APP_API_BASE_URL}/verify-otp`,
+       `${VITE_API_BASE_URL}/verify-otp`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -160,8 +160,8 @@ const Signup = ({ toggleForm }) => {
 const Login = ({ toggleForm, onForgotPassword }) => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const navigate = useNavigate();
-  const REACT_APP_API_BASE_URL=process.env.REACT_APP_API_BASE_URL;
-  console.log(REACT_APP_API_BASE_URL);
+  const VITE_API_BASE_URL=import.meta.env.VITE_API_BASE_URL;
+ 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -170,7 +170,7 @@ const Login = ({ toggleForm, onForgotPassword }) => {
     e.preventDefault();
     try {
       const response = await fetch(
-        `${REACT_APP_API_BASE_URL}/login`,
+        `${VITE_API_BASE_URL}/login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -246,11 +246,11 @@ const ForgotPassword = ({ onBackToLogin }) => {
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [step, setStep] = useState(1); // 1: Enter Email, 2: Enter OTP, 3: Enter New Password
-  const REACT_APP_API_BASE_URL=process.env.REACT_APP_API_BASE_URL;
+  const VITE_API_BASE_URL=import.meta.env.VITE_API_BASE_URL;
   const handleSendOtp = async () => {
     try {
       const response = await fetch(
-        `${REACT_APP_API_BASE_URL}/login`,
+        `${VITE_API_BASE_URL}/login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -273,7 +273,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
 
   const handleVerifyOtp = async () => {
     const authToken = localStorage.getItem("authToken");
-    const REACT_APP_API_BASE_URL=process.env.REACT_APP_API_BASE_URL;
+    const VITE_API_BASE_URL=import.meta.env.VITE_API_BASE_URL;
     if (!authToken) {
       toast.error("No authentication token found. Please log in again.");
       return;
@@ -281,7 +281,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
   
     try {
       const response = await fetch(
-        `${REACT_APP_API_BASE_URL}/reset-password`,
+        `${VITE_API_BASE_URL}/reset-password`,
         {
           method: "POST",
           headers: {

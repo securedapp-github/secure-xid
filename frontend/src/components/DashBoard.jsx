@@ -52,7 +52,7 @@ const DashBoard = () => {
   const [fetching, setFetching] = useState(false);
   const alchemyUrl = `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_API_KEY}`;
   const coingeckoUrl = "https://api.coingecko.com/api/v3/simple/price";
-  const REACT_APP_API_BASE_URL=process.env.REACT_APP_API_BASE_URL;
+  const REACT_APP_API_BASE_URL=import.meta.env.VITE_API_BASE_URL
   const [kycStatusFromAPI, setKycStatusFromAPI] = useState("");
   const [walletAddressFromAPI, setWalletAddressFromAPI] = useState("");
   const [kycLoading, setKycLoading] = useState(false);

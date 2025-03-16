@@ -52,7 +52,7 @@ const DashBoard = () => {
   const [fetching, setFetching] = useState(false);
   const alchemyUrl = `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_API_KEY}`;
   const coingeckoUrl = "https://api.coingecko.com/api/v3/simple/price";
-
+  const REACT_APP_API_BASE_URL=process.env.REACT_APP_API_BASE_URL;
   const [kycStatusFromAPI, setKycStatusFromAPI] = useState("");
   const [walletAddressFromAPI, setWalletAddressFromAPI] = useState("");
   const [kycLoading, setKycLoading] = useState(false);
@@ -295,7 +295,7 @@ const DashBoard = () => {
   
     try {
       const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/update-securexid-score`,
+        `${REACT_APP_API_BASE_URL}/update-securexid-score`,
         { score },
         {
           headers: {
@@ -336,7 +336,7 @@ const DashBoard = () => {
 
         // Fetch profile data
         const response = await axios.get(
-          `https://7571-38-183-11-158.ngrok-free.app/kyc-status/${userId}`,
+          `${REACT_APP_API_BASE_URL}/kyc-status/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

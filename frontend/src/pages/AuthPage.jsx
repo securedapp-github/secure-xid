@@ -14,7 +14,7 @@ const Signup = ({ toggleForm }) => {
   });
   const [otp, setOtp] = useState("");
   const [isOtpSent, setIsOtpSent] = useState(false);
-
+  const REACT_APP_API_BASE_URL=process.env.REACT_APP_API_BASE_URL;
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -34,7 +34,7 @@ const Signup = ({ toggleForm }) => {
 
     try {
      const response = await fetch(
-      `${process.env.REACT_APP_API_BASE_URL}/signup`,
+      `${REACT_APP_API_BASE_URL}/signup`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -58,7 +58,7 @@ const Signup = ({ toggleForm }) => {
   const handleVerifyOtp = async () => {
     try {
       const response = await fetch(
-       `${process.env.REACT_APP_API_BASE_URL}/verify-otp`,
+       `${REACT_APP_API_BASE_URL}/verify-otp`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -160,7 +160,8 @@ const Signup = ({ toggleForm }) => {
 const Login = ({ toggleForm, onForgotPassword }) => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const navigate = useNavigate();
-
+  const REACT_APP_API_BASE_URL=process.env.REACT_APP_API_BASE_URL;
+  console.log(REACT_APP_API_BASE_URL);
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -168,22 +169,24 @@ const Login = ({ toggleForm, onForgotPassword }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
-      console.log("API Base URL:", apiBaseUrl); // Debugging line
-      const response = await fetch(`${apiBaseUrl}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      const response = await fetch(
+        `${REACT_APP_API_BASE_URL}/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        }
+      );
       const data = await response.json();
   
       if (response.ok) {
         toast.success("Login successful!");
         localStorage.setItem("authToken", data.token);
-        console.log(data.token);
+       console.log(data.token);
+        // Delay navigation to allow the toast to be displayed
         setTimeout(() => {
           navigate("/kyc");
-        }, 2000); // 2 seconds delay
+        }, 2000); // 2000 milliseconds (2 seconds) delay
       } else {
         toast.error(data.message || "Login failed");
       }
@@ -243,11 +246,11 @@ const ForgotPassword = ({ onBackToLogin }) => {
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [step, setStep] = useState(1); // 1: Enter Email, 2: Enter OTP, 3: Enter New Password
-
+  const REACT_APP_API_BASE_URL=process.env.REACT_APP_API_BASE_URL;
   const handleSendOtp = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/login`,
+        `${REACT_APP_API_BASE_URL}/login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -270,7 +273,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
 
   const handleVerifyOtp = async () => {
     const authToken = localStorage.getItem("authToken");
-  
+    const REACT_APP_API_BASE_URL=process.env.REACT_APP_API_BASE_URL;
     if (!authToken) {
       toast.error("No authentication token found. Please log in again.");
       return;
@@ -278,7 +281,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
   
     try {
       const response = await fetch(
-        "https://7571-38-183-11-158.ngrok-free.app/reset-password",
+        `${REACT_APP_API_BASE_URL}/reset-password`,
         {
           method: "POST",
           headers: {

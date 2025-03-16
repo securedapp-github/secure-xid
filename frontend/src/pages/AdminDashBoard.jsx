@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Clock, FileText, Calendar, LayoutGrid, PieChart, User, Network } from 'lucide-react';
 
 const AdminDashBoard = () => {
+  const REACT_APP_API_BASE_URL=process.env.REACT_APP_API_BASE_URL;
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]); // For search functionality
   const [searchQuery, setSearchQuery] = useState(''); // Search query state
@@ -24,7 +25,7 @@ const AdminDashBoard = () => {
           return;
         }
   
-        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/admin/users`, {
+        const response = await fetch(`${REACT_APP_API_BASE_URL}/admin/users`, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`, // Include the Bearer token
@@ -49,6 +50,7 @@ const AdminDashBoard = () => {
   }, []);
   // Fetch profile data on component mount
   useEffect(() => {
+    console.log(REACT_APP_API_BASE_URL);
     const fetchProfile = async () => {
       const token = localStorage.getItem('authToken');
       if (!token) {
@@ -66,7 +68,7 @@ const AdminDashBoard = () => {
         }
 
         // Fetch profile data
-        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/kyc-status/${userId}`, {
+        const response = await fetch(`${REACT_APP_API_BASE_URL}/kyc-status/${userId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -97,7 +99,7 @@ const AdminDashBoard = () => {
         return;
       }
       console.log(userId)
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/users/${userId}/approve`, {
+      const response = await fetch(`${REACT_APP_API_BASE_URL}/users/${userId}/approve`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -138,7 +140,7 @@ const AdminDashBoard = () => {
         return;
       }
       
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/users/${userId}/reject`, {
+      const response = await fetch(`${REACT_APP_API_BASE_URL}/users/${userId}/reject`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

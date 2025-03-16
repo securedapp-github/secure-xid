@@ -143,6 +143,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
       >
         Back to Login
       </p>
+      
     </div>
   );
 };

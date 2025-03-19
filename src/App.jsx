@@ -25,6 +25,7 @@ const App = () => {
         <Route path="/" element={<AuthPage />} />
         <Route path="/kyc" element={<KycPage />} />
         <Route path="/dashboard" element={<DashBoard />} />
+     
         <Route path="/admin-dashboard" element={<AdminDashBoard />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Clock, FileText, Calendar, LayoutGrid, PieChart, User, Network } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
 
 const AdminDashBoard = () => {
   const VITE_API_BASE_URL=import.meta.env.VITE_API_BASE_URL;
   console.log(VITE_API_BASE_URL);
-  const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]); // For search functionality
+  const navigate = useNavigate();
+  // const [users, setUsers] = useState([]);
+  // const [filteredUsers, setFilteredUsers] = useState([]); // For search functionality
   const [searchQuery, setSearchQuery] = useState(''); // Search query state
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -15,7 +18,33 @@ const AdminDashBoard = () => {
     status: '',
     wallet_address: '',
   });
-
+  const [users, setUsers] = useState([
+    {
+      userDetails: {
+        id: 1,
+        fullName: 'John Doe',
+      },
+      kycDetails: {
+        walletAddress: '0x1234567890abcdef',
+        status: 'pending',
+      },
+      securexid_score: 850,
+    },
+    {
+      userDetails: {
+        id: 2,
+        fullName: 'Jane Smith',
+      },
+      kycDetails: {
+        walletAddress: '0xabcdef1234567890',
+        status: 'verified',
+      },
+      securexid_score: 920,
+    },
+  ]);
+  
+  // Initialize filteredUsers with the dummy data
+  const [filteredUsers, setFilteredUsers] = useState(users);
   // Fetch all users from the API
   useEffect(() => {
     const fetchUsers = async () => {
@@ -182,6 +211,7 @@ const AdminDashBoard = () => {
     );
     setFilteredUsers(filtered);
   };
+  
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -305,65 +335,77 @@ const AdminDashBoard = () => {
 
             {/* Users Table */}
             {/* Users Table */}
-<div className="bg-white rounded-lg shadow-md overflow-hidden">
-  <table className="min-w-full">
-    <thead className="bg-gray-50">
-      <tr>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-          Name
-        </th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-          Wallet Address
-        </th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-          KYC Status
-        </th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-          X-ID Score
-        </th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-          Actions
-        </th>
-      </tr>
-    </thead>
-    <tbody className="divide-y divide-gray-200">
-    {filteredUsers.map((user) => (
-  <tr key={user.userDetails.id} className="hover:bg-gray-50 transition-colors">
-    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-      {user.userDetails.fullName}
-    </td>
-    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-      {user.kycDetails.walletAddress}
-    </td>
-    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-      {user.kycDetails.status}
-    </td>
-    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-      {user.securexid_score ? user.securexid_score : 'N/A'}
-    </td>
-    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-      <div className="flex space-x-2">
-        <button
-          onClick={() => handleApprove(user.userDetails.id)}
-          className="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 transition-colors"
-          disabled={user.kycDetails.status === 'verified'}
-        >
-          Approve
-        </button>
-        <button
-          onClick={() => handleReject(user.userDetails.id)}
-          className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition-colors"
-          disabled={user.kycDetails.status === 'rejected'}
-        >
-          Reject
-        </button>
-      </div>
-    </td>
-  </tr>
-))}
-    </tbody>
-  </table>
-</div>
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <table className="min-w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Wallet Address
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      KYC Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      X-ID Score
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      More Info
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredUsers.map((user) => (
+                    <tr key={user.userDetails.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {user.userDetails.fullName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {user.kycDetails.walletAddress}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {user.kycDetails.status}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {user.securexid_score ? user.securexid_score : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleApprove(user.userDetails.id)}
+                            className="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 transition-colors"
+                            disabled={user.kycDetails.status === 'verified'}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleReject(user.userDetails.id)}
+                            className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition-colors"
+                            disabled={user.kycDetails.status === 'rejected'}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+  <button
+    onClick={() => navigate(`/dashboard`)} // Redirect to the dashboard route
+    className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition-colors"
+  >
+    View More
+  </button>
+</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
           </div>
         </div>
       </div>

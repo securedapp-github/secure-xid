@@ -28,7 +28,7 @@ const AdminDashBoard = () => {
         walletAddress: '0x1234567890abcdef',
         status: 'pending',
       },
-      securexid_score: 850,
+      securexid_score: 85,
     },
     {
       userDetails: {
@@ -39,7 +39,7 @@ const AdminDashBoard = () => {
         walletAddress: '0xabcdef1234567890',
         status: 'verified',
       },
-      securexid_score: 920,
+      securexid_score: 92,
     },
   ]);
   
@@ -394,7 +394,7 @@ const AdminDashBoard = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
   <button
-    onClick={() => navigate(`/dashboard`)} // Redirect to the dashboard route
+    onClick={() => navigate(`/dashboard/${user.userDetails.id}`)} // Redirect to the dashboard route
     className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition-colors"
   >
     View More

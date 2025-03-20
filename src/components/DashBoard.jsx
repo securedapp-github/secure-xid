@@ -349,6 +349,11 @@ const DashBoard = () => {
             status: response.data.status,
             wallet_address: response.data.wallet_address,
           });
+
+          // Set the wallet address for transaction analysis
+          if (response.data.wallet_address && response.data.wallet_address !== "Not submitted") {
+            setAddress(response.data.wallet_address);
+          }
         }
       } catch (error) {
         console.error("❌ Error fetching profile data:", error);
@@ -358,6 +363,7 @@ const DashBoard = () => {
 
     fetchProfile();
   }, []); 
+
 
   useEffect(() => {
     if (!address) return;
@@ -387,7 +393,6 @@ const DashBoard = () => {
 
     fetchTransactions();
   }, [address, selectedYear, selectedMonth]);
-  
 
   
   const processTransactions = async (transfers, selectedYear, selectedMonth) => {
@@ -988,13 +993,13 @@ const DashBoard = () => {
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <h2 className="text-xl font-semibold mb-4">Transaction Analysis</h2>
             <div className="space-y-4">
-              <input 
+              {/* <input 
                 type="text" 
                 placeholder="Enter wallet address" 
                 value={inputAddress} 
                 onChange={(e) => setInputAddress(e.target.value)} 
                 className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
-              />
+              /> */}
               <button 
                 onClick={() => setAddress(inputAddress)}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"

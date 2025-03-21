@@ -2,14 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Clock, FileText, Calendar, LayoutGrid, PieChart, User, Network } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-
 const AdminDashBoard = () => {
-  const VITE_API_BASE_URL=import.meta.env.VITE_API_BASE_URL;
-  console.log(VITE_API_BASE_URL);
+  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const navigate = useNavigate();
-  // const [users, setUsers] = useState([]);
-  // const [filteredUsers, setFilteredUsers] = useState([]); // For search functionality
-  const [searchQuery, setSearchQuery] = useState(''); // Search query state
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [calculationType, setCalculationType] = useState('annual');
@@ -18,33 +14,9 @@ const AdminDashBoard = () => {
     status: '',
     wallet_address: '',
   });
-  const [users, setUsers] = useState([
-    {
-      userDetails: {
-        id: 1,
-        fullName: 'John Doe',
-      },
-      kycDetails: {
-        walletAddress: '0x1234567890abcdef',
-        status: 'pending',
-      },
-      securexid_score: 85,
-    },
-    {
-      userDetails: {
-        id: 2,
-        fullName: 'Jane Smith',
-      },
-      kycDetails: {
-        walletAddress: '0xabcdef1234567890',
-        status: 'verified',
-      },
-      securexid_score: 92,
-    },
-  ]);
-  
-  // Initialize filteredUsers with the dummy data
-  const [filteredUsers, setFilteredUsers] = useState(users);
+  const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+
   // Fetch all users from the API
   useEffect(() => {
     const fetchUsers = async () => {
@@ -54,7 +26,7 @@ const AdminDashBoard = () => {
           console.error('No token found');
           return;
         }
-  
+
         const response = await fetch(`${VITE_API_BASE_URL}/admin/users`, {
           method: 'GET',
           headers: {
@@ -62,11 +34,11 @@ const AdminDashBoard = () => {
             'Content-Type': 'application/json',
           },
         });
-  
+
         if (!response.ok) {
           throw new Error('Failed to fetch users');
         }
-  
+
         const data = await response.json();
         setUsers(data.users); // Access the `users` array from the response
         setFilteredUsers(data.users); // Initialize filtered users with all users
@@ -75,12 +47,12 @@ const AdminDashBoard = () => {
         console.error('Error fetching users:', error);
       }
     };
-  
+
     fetchUsers();
-  }, []);
+  }, [VITE_API_BASE_URL]);
+
   // Fetch profile data on component mount
   useEffect(() => {
-    
     const fetchProfile = async () => {
       const token = localStorage.getItem('authToken');
       if (!token) {
@@ -117,18 +89,17 @@ const AdminDashBoard = () => {
     };
 
     fetchProfile();
-  }, []);
+  }, [VITE_API_BASE_URL]);
 
   // Handle KYC approval
   const handleApprove = async (userId) => {
     try {
       const token = localStorage.getItem('authToken');
-      console.log(token)
       if (!token) {
         console.error('No token found');
         return;
       }
-      console.log(userId)
+
       const response = await fetch(`${VITE_API_BASE_URL}/users/${userId}/approve`, {
         method: 'POST',
         headers: {
@@ -169,7 +140,7 @@ const AdminDashBoard = () => {
         console.error('No token found');
         return;
       }
-      
+
       const response = await fetch(`${VITE_API_BASE_URL}/users/${userId}/reject`, {
         method: 'POST',
         headers: {
@@ -211,7 +182,6 @@ const AdminDashBoard = () => {
     );
     setFilteredUsers(filtered);
   };
-  
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -235,7 +205,7 @@ const AdminDashBoard = () => {
       </nav>
 
       {/* Main Content */}
-      <div className="flex-1 p-8 mt-16"> {/* Add margin-top to avoid overlap with navbar */}
+      <div className="flex-1 p-8 mt-16">
         {/* Sidebar and Content */}
         <div className="flex flex-col md:flex-row">
           {/* Left Sidebar */}
@@ -334,84 +304,82 @@ const AdminDashBoard = () => {
             </div>
 
             {/* Users Table */}
-            {/* Users Table */}
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
               <table className="min-w-full">
-              <thead className="bg-gray-50">
-  <tr>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      User ID
-    </th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      Name
-    </th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      Wallet Address
-    </th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      KYC Status
-    </th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      X-ID Score
-    </th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      Actions
-    </th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      More Info
-    </th>
-  </tr>
-</thead>
-<tbody className="divide-y divide-gray-200">
-  {filteredUsers.map((user) => (
-    <tr key={user.userDetails.id} className="hover:bg-gray-50 transition-colors">
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {user.userDetails.id}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {user.userDetails.fullName}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {user.kycDetails.walletAddress}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {user.kycDetails.status}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {user.securexid_score ? user.securexid_score : 'N/A'}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        <div className="flex space-x-2">
-          <button
-            onClick={() => handleApprove(user.userDetails.id)}
-            className="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 transition-colors"
-            disabled={user.kycDetails.status === 'verified'}
-          >
-            Approve
-          </button>
-          <button
-            onClick={() => handleReject(user.userDetails.id)}
-            className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition-colors"
-            disabled={user.kycDetails.status === 'rejected'}
-          >
-            Reject
-          </button>
-        </div>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        <button
-          onClick={() => navigate(`/dashboard/${user.userDetails.id}`)} // Redirect to the dashboard route with user ID
-          className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition-colors"
-        >
-          View More
-        </button>
-      </td>
-    </tr>
-  ))}
-</tbody>
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      User ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Wallet Address
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      KYC Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      X-ID Score
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      More Info
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredUsers.map((user) => (
+                    <tr key={user.userDetails.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {user.userDetails.id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {user.userDetails.fullName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {user.kycDetails.walletAddress}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {user.kycDetails.status}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {user.securexid_score ? user.securexid_score : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleApprove(user.userDetails.id)}
+                            className="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 transition-colors"
+                            disabled={user.kycDetails.status === 'verified'}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleReject(user.userDetails.id)}
+                            className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition-colors"
+                            disabled={user.kycDetails.status === 'rejected'}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <button
+                          onClick={() => navigate(`/dashboard/${user.userDetails.id}`)}
+                          className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition-colors"
+                        >
+                          View More
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
-
           </div>
         </div>
       </div>

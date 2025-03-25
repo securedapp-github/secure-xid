@@ -371,9 +371,14 @@ const DashBoard = () => {
           // Set default occupation to "others"
           setSelectedOccupation("others");
     
-          // Auto-calculate customer risk score after setting all values
+          // Set default behavior to "Normal Past"
+          setTransactionBehavior("Normal Past");
+    
+          // Auto-calculate all risk scores after setting all values
           setTimeout(() => {
             calculateCustomerRiskScore();
+            calculateBehavioralRiskScore();
+            // Transaction risk will be calculated automatically when transactions are fetched
           }, 500);
         }
       } catch (error) {
@@ -384,6 +389,22 @@ const DashBoard = () => {
 
     fetchProfile();
   }, []); 
+
+  useEffect(() => {
+    if (transactions.length > 0 && annualIncomeRange) {
+      // Auto-calculate transaction risk when we have transactions and income range
+      computeRiskScores();
+    }
+  }, [transactions, annualIncomeRange]);
+
+  useEffect(() => {
+    // Auto-aggregate when all scores are available
+    if (customerRiskScore !== null && 
+        transactionRiskScore !== null && 
+        behavioralRiskScore !== null) {
+      aggregateResults();
+    }
+  }, [customerRiskScore, transactionRiskScore, behavioralRiskScore]);
 
 
   useEffect(() => {
@@ -1115,61 +1136,66 @@ const DashBoard = () => {
           </div>
           
           {/* Behavioral Analysis Section */}
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Behavioral Analysis</h2>
-            <div className="space-y-4">
-              <div className="relative">
-                <select
-                  value={transactionBehavior}
-                  onChange={(e) => setTransactionBehavior(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
-                >
-                  <option value="">Select a Behavior</option>
-                  {Object.keys(behaviorScores).map((behavior) => (
-                    <option key={behavior} value={behavior}>
-                      {behavior}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <button 
-                onClick={calculateBehavioralRiskScore}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
-              >
-                Calculate Behavioral Risk Score
-              </button>
-            </div>
-            
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-800 font-medium">Behavioral Risk Score:</span>
-                <span className="text-3xl font-bold">{behavioralRiskScore !== null ? behavioralRiskScore : "N/A"}</span>
-              </div>
-            </div>
-          </div>
+<div className="bg-white rounded-lg p-6 shadow-sm">
+  <h2 className="text-xl font-semibold mb-4">Behavioral Analysis</h2>
+  <div className="space-y-4">
+    <div className="relative">
+      <select
+        value={transactionBehavior}
+        onChange={(e) => setTransactionBehavior(e.target.value)}
+        className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
+      >
+        {Object.keys(behaviorScores).map((behavior) => (
+          <option key={behavior} value={behavior}>
+            {behavior}
+          </option>
+        ))}
+      </select>
+    </div>
+    
+    <button 
+      onClick={calculateBehavioralRiskScore}
+      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
+    >
+      Re-calculate Behavioral Risk Score
+    </button>
+  </div>
+  
+  <div className="mt-8 pt-6 border-t border-gray-200">
+    <div className="flex justify-between items-center">
+      <span className="text-gray-800 font-medium">Behavioral Risk Score:</span>
+      <span className="text-3xl font-bold">{behavioralRiskScore !== null ? behavioralRiskScore : "Calculating..."}</span>
+    </div>
+  </div>
+</div>
         </div>
         
+      
         {/* X-ID Score Section */}
-        <div className="mt-10 border-2 border-dashed border-gray-300 rounded-lg p-6">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-          <button 
-  onClick={aggregateResults}
-  className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200"
->
-  Get X-ID Result
-</button>
-            
-            <div className="mt-4 md:mt-0 flex items-center">
-              <div className="mr-4">
-                <span className="font-semibold">X-ID Score: {aggregateScore !== null ? aggregateScore.toFixed(2) : "N/A"}</span>
-              </div>
-              <div>
-                <p className="text-green-500 font-medium">{getQuote(aggregateScore)}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+<div className="mt-10 border-2 border-dashed border-gray-300 rounded-lg p-6">
+  <div className="flex flex-col md:flex-row justify-between items-center">
+    <button 
+      onClick={aggregateResults}
+      className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200"
+    >
+      Re-calculate X-ID Result
+    </button>
+    
+    <div className="mt-4 md:mt-0 flex items-center">
+      <div className="mr-4">
+        <span className="font-semibold">X-ID Score: </span>
+        <span className="font-bold">
+          {aggregateScore !== null ? aggregateScore.toFixed(2) : "Calculating..."}
+        </span>
+      </div>
+      <div>
+        <p className="text-green-500 font-medium">
+          {aggregateScore !== null ? getQuote(aggregateScore) : "Calculating final score..."}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
         
         {/* Transaction Details Section */}
         <div className="mt-8 bg-white rounded-lg p-6 shadow-sm">

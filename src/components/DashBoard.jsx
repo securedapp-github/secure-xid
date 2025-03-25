@@ -328,12 +328,12 @@ const DashBoard = () => {
       try {
         const decodedToken = jwtDecode(token);
         const userId = decodedToken?.user_id;
-
+    
         if (!userId) {
           toast.error("User ID not found in token.");
           return;
         }
-
+    
         // Fetch profile data
         const response = await axios.get(
           `${REACT_APP_API_BASE_URL}/kyc-status/${userId}`,
@@ -343,17 +343,38 @@ const DashBoard = () => {
             },
           }
         );
-
+    
         if (response.data) {
           setProfile({
             status: response.data.status,
             wallet_address: response.data.wallet_address,
           });
-
+    
           // Set the wallet address for transaction analysis
           if (response.data.wallet_address && response.data.wallet_address !== "Not submitted") {
             setAddress(response.data.wallet_address);
           }
+    
+          // Get country from localStorage and set it
+          const countryCode = localStorage.getItem('selectedCountryCode');
+          const countryName = localStorage.getItem('selectedCountryName');
+          
+          if (countryName) {
+            setSelectedCountry(countryName);
+          }
+    
+          // Set KYC status from API response
+          if (response.data.status) {
+            setKycStatus(response.data.status);
+          }
+    
+          // Set default occupation to "others"
+          setSelectedOccupation("others");
+    
+          // Auto-calculate customer risk score after setting all values
+          setTimeout(() => {
+            calculateCustomerRiskScore();
+          }, 500);
         }
       } catch (error) {
         console.error("❌ Error fetching profile data:", error);
@@ -557,13 +578,21 @@ const DashBoard = () => {
   };
 
   const calculateCustomerRiskScore = () => {
-    const countryScore = countries[selectedCountry] || 0;
-    const occupationScore = occupations[selectedOccupation] || 0;
-    const kycScore = kycScores[kycStatus] || 0;
-
+    // Use selected country or default to "others" if not set
+    const country = selectedCountry || "others";
+    const countryScore = countries[country] || countries["others"];
+    
+    // Use selected occupation or default to "others" if not set
+    const occupation = selectedOccupation || "others";
+    const occupationScore = occupations[occupation] || occupations["others"];
+    
+    // Use KYC status from API or default to "Not Verified" if not set
+    const kycStatusValue = kycStatus || "Not Verified";
+    const kycScore = kycScores[kycStatusValue] || kycScores["Not Verified"];
+  
     const totalRiskScore =
       0.3 * countryScore + 0.4 * occupationScore + 0.3 * kycScore;
-
+  
     setCustomerRiskScore(totalRiskScore);
   };
 
@@ -914,80 +943,81 @@ const DashBoard = () => {
         {/* Main Content Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Customer Risk Analysis Section */}
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Customer Risk Analysis</h2>
-            <div className="space-y-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={selectedCountry}
-                  onChange={handleCountrySearch}
-                  placeholder="Search country"
-                  className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
-                />
-                {filteredCountries.length > 0 && (
-                  <ul className="autocomplete-list mt-2 bg-white border border-gray-300 rounded-md shadow-lg">
-                    {filteredCountries.map((country) => (
-                      <li
-                        key={country}
-                        onClick={() => {
-                          setSelectedCountry(country);
-                          setFilteredCountries([]);
-                        }}
-                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                      >
-                        {country}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              
-              <div className="relative">
-                <select
-                  value={selectedOccupation}
-                  onChange={(e) => setSelectedOccupation(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
-                >
-                  <option value="">Select an Occupation</option>
-                  {Object.keys(occupations).map((occupation) => (
-                    <option key={occupation} value={occupation}>
-                      {occupation}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="relative">
-                <select
-                  value={kycStatus}
-                  onChange={(e) => setKycStatus(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
-                >
-                  <option value="">Select KYC Status</option>
-                  {Object.keys(kycScores).map((status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <button 
-                onClick={calculateCustomerRiskScore}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
-              >
-                Calculate Customer Risk Score
-              </button>
-            </div>
-            
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-800 font-medium">Customer Risk Score:</span>
-                <span className="text-3xl font-bold">{customerRiskScore !== null ? customerRiskScore.toFixed(2) : "N/A"}</span>
-              </div>
-            </div>
-          </div>
+        {/* Customer Risk Analysis Section */}
+<div className="bg-white rounded-lg p-6 shadow-sm">
+  <h2 className="text-xl font-semibold mb-4">Customer Risk Analysis</h2>
+  <div className="space-y-4">
+    <div className="relative">
+      <input
+        type="text"
+        value={selectedCountry}
+        onChange={handleCountrySearch}
+        placeholder="Search country"
+        className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
+      />
+      {filteredCountries.length > 0 && (
+        <ul className="autocomplete-list mt-2 bg-white border border-gray-300 rounded-md shadow-lg">
+          {filteredCountries.map((country) => (
+            <li
+              key={country}
+              onClick={() => {
+                setSelectedCountry(country);
+                setFilteredCountries([]);
+              }}
+              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+            >
+              {country}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+    
+    <div className="relative">
+      <select
+        value={selectedOccupation}
+        onChange={(e) => setSelectedOccupation(e.target.value)}
+        className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
+      >
+        <option value="others">Others (default)</option>
+        {Object.keys(occupations).map((occupation) => (
+          <option key={occupation} value={occupation}>
+            {occupation}
+          </option>
+        ))}
+      </select>
+    </div>
+    
+    <div className="relative">
+      <select
+        value={kycStatus}
+        onChange={(e) => setKycStatus(e.target.value)}
+        className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
+      >
+        <option value="">Select KYC Status</option>
+        {Object.keys(kycScores).map((status) => (
+          <option key={status} value={status}>
+            {status}
+          </option>
+        ))}
+      </select>
+    </div>
+    
+    <button 
+      onClick={calculateCustomerRiskScore}
+      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
+    >
+      Re-calculate Customer Risk Score
+    </button>
+  </div>
+  
+  <div className="mt-8 pt-6 border-t border-gray-200">
+    <div className="flex justify-between items-center">
+      <span className="text-gray-800 font-medium">Customer Risk Score:</span>
+      <span className="text-3xl font-bold">{customerRiskScore !== null ? customerRiskScore.toFixed(2) : "Calculating..."}</span>
+    </div>
+  </div>
+</div>
           
           {/* Transaction Analysis Section */}
           <div className="bg-white rounded-lg p-6 shadow-sm">

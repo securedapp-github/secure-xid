@@ -15,7 +15,7 @@ const countries = [
   { code: 'CM', name: 'Cameroon' }, { code: 'CA', name: 'Canada' }, { code: 'CF', name: 'Central African Republic' },
   { code: 'TD', name: 'Chad' }, { code: 'CL', name: 'Chile' }, { code: 'CN', name: 'China' },
   { code: 'CO', name: 'Colombia' }, { code: 'KM', name: 'Comoros' }, { code: 'CG', name: 'Congo' },
-  { code: 'CD', name: 'Democratic Republic of the Congo' }, { code: 'CR', name: 'Costa Rica' }, { code: 'CI', name: 'Côte d’Ivoire' },
+  { code: 'CD', name: 'Democratic Republic of the Congo' }, { code: 'CR', name: 'Costa Rica' }, { code: 'CI', name: "Côte d'Ivoire" },
   { code: 'HR', name: 'Croatia' }, { code: 'CU', name: 'Cuba' }, { code: 'CY', name: 'Cyprus' },
   { code: 'CZ', name: 'Czechia' }, { code: 'DK', name: 'Denmark' }, { code: 'DJ', name: 'Djibouti' },
   { code: 'DM', name: 'Dominica' }, { code: 'DO', name: 'Dominican Republic' }, { code: 'EC', name: 'Ecuador' },
@@ -46,11 +46,9 @@ const countries = [
   { code: 'RU', name: 'Russia' }, { code: 'SA', name: 'Saudi Arabia' }, { code: 'SG', name: 'Singapore' }
 ];
 
-
 const allDocumentTypes = [
   { id: 'passport', name: 'Passport' },
   { id: 'drivers_license', name: "Driver's License" },
- 
   { id: 'adhaar_card', name: 'Adhaar Card' }
 ];
 
@@ -61,13 +59,25 @@ const SelectDocument = ({ onNext }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (country && documentType) {
+      // Find the selected country object
+      const selectedCountryObj = countries.find(c => c.code === country);
+      
+      if (selectedCountryObj) {
+        // Save both code and name to localStorage
+        localStorage.setItem('selectedCountryCode', selectedCountryObj.code);
+        localStorage.setItem('selectedCountryName', selectedCountryObj.name);
+        
+        // Log to console
+        console.log('Selected country:', selectedCountryObj.name, '(', selectedCountryObj.code, ')');
+      }
+      
       onNext();
-    }
+    } 
   };
 
   // Filter document types based on selected country
   const filteredDocuments = country === 'IN' 
-    ? allDocumentTypes.filter(doc => doc.id === 'drivers_license' || doc.id === 'adhaar_card' ||  doc.id==="passport") 
+    ? allDocumentTypes.filter(doc => doc.id === 'drivers_license' || doc.id === 'adhaar_card' || doc.id === "passport") 
     : allDocumentTypes.filter(doc => doc.id !== 'adhaar_card');
 
   return (

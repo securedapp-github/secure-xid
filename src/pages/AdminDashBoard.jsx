@@ -157,7 +157,7 @@ const AdminDashBoard = () => {
               ? { ...user, kycDetails: { ...user.kycDetails, status: 'rejected' } }
               : user
           )
-        );
+        );  
         setFilteredUsers((prevUsers) =>
           prevUsers.map((user) =>
             user.userDetails.id === userId

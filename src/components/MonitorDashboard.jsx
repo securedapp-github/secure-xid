@@ -3,6 +3,8 @@ import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import "./DashBoard.css";
 import { useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import { 
   Clock, 
@@ -16,10 +18,10 @@ import {
 
 const MonitorDashboard = () => {
   // States for customer risk analysis
-  const [selectedOccupation, setSelectedOccupation] = useState("");
-  const [kycStatus, setKycStatus] = useState("");
+  const [selectedOccupation, setSelectedOccupation] = useState("others");
+  const [kycStatus, setKycStatus] = useState("Not Verified");
   const [customerRiskScore, setCustomerRiskScore] = useState(null);
-  const [selectedCountry, setSelectedCountry] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState("others");
   const [filteredCountries, setFilteredCountries] = useState([]);
   // States for transaction analysis
   const [threshold, setThreshold] = useState(0);
@@ -38,28 +40,27 @@ const MonitorDashboard = () => {
   const [circularRisk, setCircularRisk] = useState(0);
   const [address, setAddress] = useState("");
   const [totalRiskScore, setTotalRiskScore] = useState(0);
-  const [annualIncomeRange, setAnnualIncomeRange] = useState("");
+  const [annualIncomeRange, setAnnualIncomeRange] = useState("$50000 - $100000");
   const [transactionValue, setTransactionValue] = useState("");
   const [transactionThreshold, setTransactionThreshold] = useState(null);
   const [transactionRiskScore, setTransactionRiskScore] = useState(null);
   // States for transaction behavioral analysis
-  const [transactionBehavior, setTransactionBehavior] = useState("");
+  const [transactionBehavior, setTransactionBehavior] = useState("Normal Past");
   const [behavioralRiskScore, setBehavioralRiskScore] = useState(null);
 
   // State for the aggregated result
   const [aggregateScore, setAggregateScore] = useState(null);
   const [inputAddress, setInputAddress] = useState("");
-  const [calculationType, setCalculationType] = useState("annual"); // 'annual' or 'monthly'
+  const [calculationType, setCalculationType] = useState("annual");
   const ALCHEMY_API_KEY = "gQ3YwPsTCsqwjr1ocrnONX63jiNZKkVT";
   const [fetching, setFetching] = useState(false);
   const alchemyUrl = `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_API_KEY}`;
   const coingeckoUrl = "https://api.coingecko.com/api/v3/simple/price";
-  const REACT_APP_API_BASE_URL=import.meta.env.VITE_API_BASE_URL
-  const [kycStatusFromAPI, setKycStatusFromAPI] = useState("");
-  const [walletAddressFromAPI, setWalletAddressFromAPI] = useState("");
+  const REACT_APP_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [kycLoading, setKycLoading] = useState(false);
   const [kycError, setKycError] = useState(null);
   const { userId } = useParams(); 
+  
   const countries = {
     Afghanistan: 80,
     Albania: 40,
@@ -252,41 +253,63 @@ const MonitorDashboard = () => {
     "Sports Agent": 45,
     "Investment Advisor": 55,
     "Pawn Shop Owner": 65,
-    "others":50
+    "others": 50
   };
   
-   const kycScores = {
-     "Fully Verified": 10,
-     "Partially Verified": 50,
-     "Not Verified": 80,
-   };
+  const kycScores = {
+    "Fully Verified": 10,
+    "Partially Verified": 50,
+    "Not Verified": 80,
+  };
  
-   const incomeRanges = {
-    "< $25000": [25000, 25000], // [min, max]
+  const incomeRanges = {
+    "< $25000": [25000, 25000],
     "$25000 - $50000": [25000, 50000],
     "$50000 - $100000": [50000, 100000],
     "$100000 - $500000": [100000, 500000],
     "$500000 - $1000000": [500000, 1000000],
-    "$1000000+": [1000000, 1000000], // Use Infinity for the upper bound
+    "$1000000+": [1000000, 1000000],
   };
   
-   const transactionScores = {
+  const transactionScores = {
     low: 20,
     medium: 60,
     high: 100,
   };
   
- 
-   const behaviorScores = {
-     "Suspicious Past": 90,
-     "Normal Past": 50,
-     "Very Good Past": 10,
-   };
-   const [profile, setProfile] = useState({
-    status: "",
+  const behaviorScores = {
+    "Suspicious Past": 90,
+    "Normal Past": 50,
+    "Very Good Past": 10,
+  };
+  
+  const [profile, setProfile] = useState({
+    status: "Not Verified",
     wallet_address: "",
+    country: "others",
+    occupation: "others"
   });
- 
+
+  // Automatically calculate risk scores when component mounts or profile changes
+  useEffect(() => {
+    if (profile.status) {
+      setKycStatus(profile.status);
+      calculateCustomerRiskScore();
+    }
+    if (profile.wallet_address && profile.wallet_address !== "Not submitted") {
+      setAddress(profile.wallet_address);
+    }
+    if (profile.country) {
+      setSelectedCountry(profile.country);
+    }
+    if (profile.occupation) {
+      setSelectedOccupation(profile.occupation);
+    }
+    // Set default behavioral analysis
+    setTransactionBehavior("Normal Past");
+    calculateBehavioralRiskScore();
+  }, [profile]);
+
   const updateSecureXIDScore = async (score) => {
     const token = localStorage.getItem("authToken");
   
@@ -316,6 +339,7 @@ const MonitorDashboard = () => {
       toast.error("An error occurred. Please try again.");
     }
   };
+
   // Fetch profile data on component mount
   useEffect(() => {
     const fetchProfile = async () => {
@@ -327,7 +351,7 @@ const MonitorDashboard = () => {
       }
       
       try {
-        // Fetch profile data using the userId from the route
+        setKycLoading(true);
         const response = await axios.get(
           `${REACT_APP_API_BASE_URL}/kyc-status/${userId}`,
           {
@@ -339,24 +363,29 @@ const MonitorDashboard = () => {
 
         if (response.data) {
           setProfile({
-            status: response.data.status,
-            wallet_address: response.data.wallet_address,
+            status: response.data.status || "Not Verified",
+            wallet_address: response.data.wallet_address || "",
+            country: response.data.country || "others",
+            occupation: response.data.occupation || "others"
           });
-
-          // Set the wallet address for transaction analysis
-          if (response.data.wallet_address && response.data.wallet_address !== "Not submitted") {
-            setAddress(response.data.wallet_address);
-          }
         }
       } catch (error) {
         console.error("❌ Error fetching profile data:", error);
-        toast.error("Failed to fetch profile data.");
+        setKycError("Failed to fetch profile data");
+        // Set default values if API fails
+        setProfile({
+          status: "Not Verified",
+          wallet_address: "",
+          country: "others",
+          occupation: "others"
+        });
+      } finally {
+        setKycLoading(false);
       }
     };
 
     fetchProfile();
-  }, [userId]); // Add userId to the dependency array
-
+  }, [userId]);
 
   useEffect(() => {
     if (!address) return;
@@ -461,32 +490,27 @@ const MonitorDashboard = () => {
     let calculatedThreshold;
   
     if (maxIncome === 0) {
-      // Unbounded above (e.g., "$1000000+")
-      calculatedThreshold = minIncome * 0.33; // 33% of the lower bound
+      calculatedThreshold = minIncome * 0.33;
     } else if (minIncome === 0) {
-      // Unbounded below (e.g., "< $25000")
-      calculatedThreshold = maxIncome * 0.33; // 33% of the upper bound
+      calculatedThreshold = maxIncome * 0.33;
     } else {
-      // Bounded range (e.g., "$25000 - $50000")
       const medianIncome = (minIncome + maxIncome) / 2;
-      calculatedThreshold = medianIncome * 0.33; // 33% of the median
+      calculatedThreshold = medianIncome * 0.33;
     }
   
-    // Adjust threshold based on calculation type (annual or monthly)
     if (calculationType === "monthly") {
-      calculatedThreshold = calculatedThreshold / 12; // Monthly threshold
+      calculatedThreshold = calculatedThreshold / 12;
     }
   
-    // Update the threshold state
     setThreshold(calculatedThreshold);
   
     let thresholdRiskScore = 0;
     if (totalUSD > calculatedThreshold * 2) {
-      thresholdRiskScore = 100; // High risk
+      thresholdRiskScore = 100;
     } else if (totalUSD > calculatedThreshold) {
-      thresholdRiskScore = 50; // Medium risk
+      thresholdRiskScore = 50;
     } else {
-      thresholdRiskScore = 0; // Low risk
+      thresholdRiskScore = 0;
     }
   
     setThresholdRisk(thresholdRiskScore);
@@ -505,7 +529,7 @@ const MonitorDashboard = () => {
 
     try {
       const assetList = [...new Set(assets.map(asset => asset.toLowerCase()))];
-      if (!assetList.includes("ethereum")) assetList.push("ethereum"); // Ensure ETH is included
+      if (!assetList.includes("ethereum")) assetList.push("ethereum");
 
       const response = await axios.get(coingeckoUrl, {
         params: { ids: assetList.join(","), vs_currencies: "usd" }
@@ -519,7 +543,6 @@ const MonitorDashboard = () => {
   };
 
   useEffect(() => {
-    // This effect will run whenever any of the risk scores change
     computeRiskScores();
   }, [riskLevel, varianceRisk, timeGapConsistency, directionRisk, crossWalletRisk, circularRisk]);
 
@@ -531,7 +554,7 @@ const MonitorDashboard = () => {
       directionRisk,
       crossWalletRisk,
       circularRisk,
-      thresholdRisk, // Include threshold risk
+      thresholdRisk,
     ];
 
     const validScores = scores.filter(score => typeof score === "number");
@@ -557,25 +580,14 @@ const MonitorDashboard = () => {
       0.3 * countryScore + 0.4 * occupationScore + 0.3 * kycScore;
 
     setCustomerRiskScore(totalRiskScore);
+    return totalRiskScore;
   };
 
   const calculateBehavioralRiskScore = () => {
     const behaviorScore = behaviorScores[transactionBehavior] || 0;
     setBehavioralRiskScore(behaviorScore);
+    return behaviorScore;
   };
-  const renderCalculationTypeDropdown = () => (
-    <label className="block mb-4">
-      Calculation Type:
-      <select
-        value={calculationType}
-        onChange={(e) => setCalculationType(e.target.value)}
-        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00FF85] focus:border-transparent"
-      >
-        <option value="annual">Annual</option>
-        <option value="monthly">Monthly</option>
-      </select>
-    </label>
-  );
 
   const convertToUSD = async (asset, amount, exchangeRates) => {
     if (!asset || !amount) return 0;
@@ -598,7 +610,7 @@ const MonitorDashboard = () => {
 
   const calculateVarianceRisk = (values) => {
     if (values.length < 2) {
-      setVarianceRisk("Insufficient data");
+      setVarianceRisk(10);
       return;
     }
 
@@ -613,15 +625,15 @@ const MonitorDashboard = () => {
     else setVarianceRisk(10);
   };
 
-  const analyzeTimeGapConsistency = (timestamps) => {
-    if (timestamps.length < 2) {
-      setTimeGapConsistency("Insufficient data");
+  const analyzeTimeGapConsistency = (transactions) => {
+    if (transactions.length < 2) {
+      setTimeGapConsistency(10);
       return;
     }
 
-    timestamps.sort((a, b) => a - b);
-
+    const timestamps = transactions.map(tx => tx.metadata.blockTimestamp).sort((a, b) => a - b);
     let timeGaps = [];
+    
     for (let i = 1; i < timestamps.length; i++) {
       const gap = (timestamps[i] - timestamps[i - 1]) / 1000 / 60;
       timeGaps.push(gap);
@@ -635,7 +647,7 @@ const MonitorDashboard = () => {
     const totalTransactions = deviation.length;
 
     if (highDeviationCount / totalTransactions >= 0.7) {
-      setTimeGapConsistency(10);
+      setTimeGapConsistency(90);
     } else if (mediumDeviationCount / totalTransactions >= 0.5) {
       setTimeGapConsistency(50);
     } else {
@@ -729,6 +741,7 @@ const MonitorDashboard = () => {
       setCircularRisk(10);
     }
   };
+
   const handleCountrySearch = (e) => {
     const query = e.target.value.toLowerCase();
     setSelectedCountry(query);
@@ -741,36 +754,41 @@ const MonitorDashboard = () => {
       setFilteredCountries([]);
     }
   };
+
   const aggregateResults = () => {
-    const scores = [
-      { score: totalRiskScore, weight: 0.5 }, // 50% weight
-      { score: customerRiskScore, weight: 0.3 }, // 30% weight
-      { score: behavioralRiskScore, weight: 0.2 }, // 20% weight
-    ].filter((entry) => entry.score !== null); // Filter out null scores
-  
-    // Check if all required scores are available
-    if (scores.length === 3) {
-      // Calculate the weighted score
-      const weightedScore = scores.reduce(
-        (sum, { score, weight }) => sum + score * weight,
-        0
-      );
-  
-      // Scale the score to 1000
-      const scaledScore = weightedScore * 10; // Scale to 1000
-  
-      // Set the aggregate score
-      setAggregateScore(scaledScore);
-  
-      // Call the API to update the SecureXID score
-      updateSecureXIDScore(scaledScore);
-    } else {
-      // Alert if any score is missing
-      alert("Please calculate all scores before aggregating.");
+    // Calculate all scores first
+    const customerScore = calculateCustomerRiskScore();
+    const behaviorScore = calculateBehavioralRiskScore();
+    const transactionScore = parseFloat(totalRiskScore);
+    
+    if (isNaN(customerScore)) {
+      toast.error("Please complete customer risk analysis");
+      return;
     }
+    
+    if (isNaN(behaviorScore)) {
+      toast.error("Please complete behavioral analysis");
+      return;
+    }
+    
+    if (isNaN(transactionScore)) {
+      toast.error("Please complete transaction analysis");
+      return;
+    }
+
+    const weightedScore = 
+      (customerScore * 0.3) + 
+      (behaviorScore * 0.2) + 
+      (transactionScore * 0.5);
+    
+    const scaledScore = weightedScore * 10;
+    
+    setAggregateScore(scaledScore);
+    updateSecureXIDScore(scaledScore);
   };
 
   const getQuote = (score) => {
+    if (!score) return "Complete all analyses to get your risk score";
     if (score > 700) {
       return "This transaction is suspicious! You are under government surveillance.";
     } else if (score > 400) {
@@ -778,8 +796,8 @@ const MonitorDashboard = () => {
     } else {
       return "Your activity looks clean and secure. Keep up the good work!";
     }
-  }
- 
+  };
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
       {/* Left Sidebar - Hidden on mobile, visible on desktop */}
@@ -793,14 +811,14 @@ const MonitorDashboard = () => {
         {/* Profile Details */}
         <div className="mt-4 text-center">
           <p className="text-sm font-medium text-gray-700">KYC Status:</p>
-          <p className="text-sm text-gray-500">{profile.status || "N/A"}</p>
+          <p className="text-sm text-gray-500">{profile.status || "Not Verified"}</p>
         </div>
         <div className="mt-2 text-center">
           <p className="text-sm font-medium text-gray-700">Wallet Address:</p>
           <p className="text-sm text-gray-500">
             {profile.wallet_address
               ? `${profile.wallet_address.slice(0, 6)}...${profile.wallet_address.slice(-4)}`
-              : "N/A"}
+              : "Not submitted"}
           </p>
         </div>
   
@@ -941,7 +959,6 @@ const MonitorDashboard = () => {
                   onChange={(e) => setSelectedOccupation(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
                 >
-                  <option value="">Select an Occupation</option>
                   {Object.keys(occupations).map((occupation) => (
                     <option key={occupation} value={occupation}>
                       {occupation}
@@ -956,7 +973,6 @@ const MonitorDashboard = () => {
                   onChange={(e) => setKycStatus(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
                 >
-                  <option value="">Select KYC Status</option>
                   {Object.keys(kycScores).map((status) => (
                     <option key={status} value={status}>
                       {status}
@@ -969,14 +985,14 @@ const MonitorDashboard = () => {
                 onClick={calculateCustomerRiskScore}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
               >
-                Calculate Customer Risk Score
+                Recalculate Customer Risk
               </button>
             </div>
             
             <div className="mt-8 pt-6 border-t border-gray-200">
               <div className="flex justify-between items-center">
                 <span className="text-gray-800 font-medium">Customer Risk Score:</span>
-                <span className="text-3xl font-bold">{customerRiskScore !== null ? customerRiskScore.toFixed(2) : "N/A"}</span>
+                <span className="text-3xl font-bold">{customerRiskScore !== null ? customerRiskScore.toFixed(2) : "Calculating..."}</span>
               </div>
             </div>
           </div>
@@ -985,27 +1001,12 @@ const MonitorDashboard = () => {
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <h2 className="text-xl font-semibold mb-4">Transaction Analysis</h2>
             <div className="space-y-4">
-              {/* <input 
-                type="text" 
-                placeholder="Enter wallet address" 
-                value={inputAddress} 
-                onChange={(e) => setInputAddress(e.target.value)} 
-                className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
-              /> */}
-              <button 
-                onClick={() => setAddress(inputAddress)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
-              >
-                Fetch Transactions
-              </button>
-              
               <div className="relative">
                 <select
                   value={annualIncomeRange}
                   onChange={(e) => setAnnualIncomeRange(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
                 >
-                  <option value="">Select Income Range</option>
                   {Object.keys(incomeRanges).map((range) => (
                     <option key={range} value={range}>
                       {range}
@@ -1086,7 +1087,6 @@ const MonitorDashboard = () => {
                   onChange={(e) => setTransactionBehavior(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-500"
                 >
-                  <option value="">Select a Behavior</option>
                   {Object.keys(behaviorScores).map((behavior) => (
                     <option key={behavior} value={behavior}>
                       {behavior}
@@ -1099,14 +1099,14 @@ const MonitorDashboard = () => {
                 onClick={calculateBehavioralRiskScore}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
               >
-                Calculate Behavioral Risk Score
+                Recalculate Behavioral Risk
               </button>
             </div>
             
             <div className="mt-8 pt-6 border-t border-gray-200">
               <div className="flex justify-between items-center">
                 <span className="text-gray-800 font-medium">Behavioral Risk Score:</span>
-                <span className="text-3xl font-bold">{behavioralRiskScore !== null ? behavioralRiskScore : "N/A"}</span>
+                <span className="text-3xl font-bold">{behavioralRiskScore !== null ? behavioralRiskScore : "Calculating..."}</span>
               </div>
             </div>
           </div>
@@ -1115,16 +1115,16 @@ const MonitorDashboard = () => {
         {/* X-ID Score Section */}
         <div className="mt-10 border-2 border-dashed border-gray-300 rounded-lg p-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
-          <button 
-  onClick={aggregateResults}
-  className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200"
->
-  Get X-ID Result
-</button>
+            <button 
+              onClick={aggregateResults}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200"
+            >
+              Get X-ID Result
+            </button>
             
             <div className="mt-4 md:mt-0 flex items-center">
               <div className="mr-4">
-                <span className="font-semibold">X-ID Score: {aggregateScore !== null ? aggregateScore.toFixed(2) : "N/A"}</span>
+                <span className="font-semibold">X-ID Score: {aggregateScore !== null ? aggregateScore.toFixed(2) : "Not calculated"}</span>
               </div>
               <div>
                 <p className="text-green-500 font-medium">{getQuote(aggregateScore)}</p>
@@ -1149,28 +1149,36 @@ const MonitorDashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {transactions.map((tx, index) => (
-                  <tr key={index} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {tx.metadata?.blockTimestamp ? new Date(tx.metadata.blockTimestamp).toISOString().split("T")[0] : "N/A"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {tx.hash?.slice(0, 10)}...
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {tx.from}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {tx.to}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ${tx.usdValue?.toFixed(20) || "0.00"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {tx.asset || "Unknown"}
+                {transactions.length > 0 ? (
+                  transactions.map((tx, index) => (
+                    <tr key={index} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {tx.metadata?.blockTimestamp ? new Date(tx.metadata.blockTimestamp).toISOString().split("T")[0] : "N/A"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {tx.hash?.slice(0, 10)}...
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {tx.from}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {tx.to}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${tx.usdValue?.toFixed(20) || "0.00"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {tx.asset || "Unknown"}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
+                      {loading ? "Loading transactions..." : "No transactions found"}
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -1179,12 +1187,5 @@ const MonitorDashboard = () => {
     </div>
   );
 };
+
 export default MonitorDashboard;
-
-
-
-
-
-
-
-

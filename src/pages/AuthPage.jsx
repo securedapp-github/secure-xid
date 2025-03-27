@@ -160,8 +160,28 @@ const Signup = ({ toggleForm }) => {
 const Login = ({ toggleForm, onForgotPassword }) => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const navigate = useNavigate();
-  const VITE_API_BASE_URL=import.meta.env.VITE_API_BASE_URL;
- 
+  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  const fetchUserRole = async (userId) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(
+        `${VITE_API_BASE_URL}/users/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      return data.role;
+    } catch (error) {
+      console.error("Error fetching user role:", error);
+      toast.error("❌ Failed to fetch user role. Please try again.");
+      return null;
+    }
+  };
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -182,11 +202,24 @@ const Login = ({ toggleForm, onForgotPassword }) => {
       if (response.ok) {
         toast.success("Login successful!");
         localStorage.setItem("authToken", data.token);
-       console.log(data.token);
-        // Delay navigation to allow the toast to be displayed
-        setTimeout(() => {
-          navigate("/kyc");
-        }, 2000); // 2000 milliseconds (2 seconds) delay
+        localStorage.setItem("userId", data.userId); // Store userId from login response
+        
+        // Fetch user role after successful login
+        const userRole = await fetchUserRole(data.userId);
+        
+        if (userRole) {
+          // Delay navigation to allow the toast to be displayed
+          setTimeout(() => {
+            // Navigate based on user role
+            if (userRole === "admin") {
+              navigate("/admin-dashboard");
+            } else {
+              navigate("/kyc");
+            }
+          }, 2000); // 2000 milliseconds (2 seconds) delay
+        } else {
+          toast.error("Unable to determine user role");
+        }
       } else {
         toast.error(data.message || "Login failed");
       }
@@ -240,6 +273,7 @@ const Login = ({ toggleForm, onForgotPassword }) => {
     </div>
   );
 };
+
 
 const ForgotPassword = ({ onBackToLogin }) => {
   const [email, setEmail] = useState("");

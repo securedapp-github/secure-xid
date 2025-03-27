@@ -6,12 +6,14 @@ import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import WalletConnectButton from "./WalletConnectButton";
+import { CheckCircle } from 'lucide-react'; // Import check circle icon
 
 const FaceId = ({ onBack, frontFile, backFile }) => {
   const webcamRef = useRef(null);
   const [imageSrc, setImageSrc] = useState(null);
   const [isPhotoConfirmed, setIsPhotoConfirmed] = useState(false);
   const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const [showCompletion, setShowCompletion] = useState(false);
   const navigate = useNavigate();
   const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -64,7 +66,7 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
     const countryName = localStorage.getItem('selectedCountryName');
     const token = localStorage.getItem("authToken");
     const walletAddress = localStorage.getItem("walletAddress");
-    const country = localStorage.getItem("selectedCountry"); // Get country from localStorage
+    const country = localStorage.getItem("selectedCountry");
     
     if (!token) {
       toast.error("No token found, please log in.");
@@ -91,9 +93,8 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
         formData.append("back_id", backFile);
         formData.append("selfie_with_id", dataURItoBlob(imageSrc));
         formData.append("wallet_address", walletAddress);
-        formData.append("country", countryName); // Add country to the form data
+        formData.append("country", countryName);
 
-        
         const response = await axios.post(
           `${VITE_API_BASE_URL}/upload-kyc`,
           formData,
@@ -106,16 +107,24 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
         );
 
         if (response.status === 201) {
-          toast.success("✅ Your documents have been submitted successfully!");
-
-          const userRole = await fetchUserRole(userId);
-          if (userRole === "admin") {
-            navigate("/admin-dashboard");
-          } else if (userRole === "user") {
-            navigate("/dashboard");
-          } else {
-            toast.error("❌ Unknown user role.");
-          }
+          // Show completion popup instead of immediate navigation
+          setShowCompletion(true);
+          
+          // Hide popup and navigate after delay
+          setTimeout(() => {
+            setShowCompletion(false);
+            const navigateToDashboard = async () => {
+              const userRole = await fetchUserRole(userId);
+              if (userRole === "admin") {
+                navigate("/admin-dashboard");
+              } else if (userRole === "user") {
+                navigate("/dashboard");
+              } else {
+                toast.error("❌ Unknown user role.");
+              }
+            };
+            navigateToDashboard();
+          }, 3000);
         }
       } else {
         toast.warning("⚠️ Please upload all required images.");
@@ -127,7 +136,7 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
   };
 
   return (
-    <div className="max-w-lg mx-auto p-6 bg-white shadow-md rounded-lg text-center">
+    <div className="max-w-lg mx-auto p-6 bg-white shadow-md rounded-lg text-center relative">
       <ToastContainer />
       <h2 className="text-2xl font-semibold mb-4">Capture Your Photo</h2>
 
@@ -196,6 +205,29 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
           Submit
         </button>
       </div>
+
+      {/* Completion Popup */}
+      {showCompletion && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex flex-col items-center">
+              {/* Circular progress indicator with check mark */}
+              <div className="relative">
+                <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center">
+                  <CheckCircle className="w-16 h-16 text-green-500" />
+                </div>
+                {/* Animated circle border */}
+                <div className="absolute inset-0 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+              
+              <h3 className="text-xl font-semibold mt-6 text-gray-800">KYC Submission Completed</h3>
+              <p className="text-gray-600 mt-2 text-center">
+                Your documents have been successfully verified. You can now access all features.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

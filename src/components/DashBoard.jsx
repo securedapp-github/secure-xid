@@ -851,14 +851,14 @@ const DashBoard = () => {
         {/* Profile Details */}
         <div className="mt-4 text-center">
           <p className="text-sm font-medium text-gray-700">KYC Status:</p>
-          <p className="text-sm text-gray-500">{profile.status || "N/A"}</p>
+          <p className="text-sm text-gray-500">{profile.status || "Not submitted"}</p>
         </div>
         <div className="mt-2 text-center">
           <p className="text-sm font-medium text-gray-700">Wallet Address:</p>
           <p className="text-sm text-gray-500">
             {profile.wallet_address
               ? `${profile.wallet_address.slice(0, 6)}...${profile.wallet_address.slice(-4)}`
-              : "N/A"}
+              : "Not submitted"}
           </p>
         </div>
   
@@ -884,83 +884,82 @@ const DashBoard = () => {
       {/* Main Content */}
       <div className="flex-1 p-8">
         {/* Left Side Menu */}
-        <div className="mb-8">
-          <div className="bg-gray-100 rounded-full py-3 px-6 inline-block mb-6">
-            <h2 className="text-gray-700 font-medium">SecureX-ID</h2>
-          </div>
-          <div className="bg-white rounded-lg py-3 px-6 inline-block">
-            <h2 className="text-blue-700 font-medium">Risk Scoring Module</h2>
-          </div>
-        </div>
-  
-        <h1 className="text-3xl font-bold mb-8">Risk Scoring Module</h1>
-  
-        {/* Filter Section */}
-        <div className="flex justify-end mb-6">
-          <div className="flex items-center space-x-4 bg-blue-500 p-3 rounded-lg shadow-md">
-            {/* Calculation Type Dropdown */}
-            <label className="text-white">
-              Calculation Type:
-              <select
-                value={calculationType}
-                onChange={(e) => setCalculationType(e.target.value)}
-                className="ml-2 bg-blue-500 text-white border-none focus:outline-none"
-              >
-                <option value="monthly">Monthly</option>
-                <option value="annual">Annual</option>
-              </select>
-            </label>
-  
-            {/* Year Dropdown */}
-            <label className="text-white">
-              Year:
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                className="ml-2 bg-transparent text-white border-none focus:outline-none"
-              >
-                {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map((year) => (
-                  <option key={year} value={year} className="bg-blue-500">
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </label>
-  
-            {/* Month Dropdown (only shown for monthly calculation) */}
-            {calculationType === "monthly" && (
-              <label className="text-white">
-                Month:
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                  className="ml-2 bg-transparent text-white border-none focus:outline-none"
-                >
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                    <option key={month} value={month} className="bg-blue-500">
-                      {new Date(0, month - 1).toLocaleString('default', { month: 'long' })}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-  
-            {/* Apply and Clear Buttons */}
-            <button
-              onClick={() => setIsFilterApplied(true)}
-              className="bg-white text-blue-500 py-1 px-3 rounded-md hover:bg-gray-100 transition-colors"
-            >
-              Apply
-            </button>
-            <button
-              onClick={() => setIsFilterApplied(false)}
-              className="bg-white text-blue-500 py-1 px-3 rounded-md hover:bg-gray-100 transition-colors"
-            >
-              Clear
-            </button>
-          </div>
-        </div>
-  
+       {/* Header and Filter Section - Combined in one line */}
+<div className="flex justify-between items-center mb-8">
+  {/* Heading Section */}
+  <div>
+    <div className="bg-gray-100 rounded-full py-3 px-6 inline-block mb-2">
+      <h2 className="text-gray-700 font-medium">SecureX-ID</h2>
+    </div>
+    <h1 className="text-3xl font-bold">Risk Scoring Module</h1>
+  </div>
+
+  {/* Filter Section - Now on the same line */}
+  <div className="flex items-center bg-blue-500 p-3 rounded-lg shadow-md">
+    {/* Calculation Type Dropdown */}
+    <label className="text-white whitespace-nowrap mr-2">
+      Calculation:
+      <select
+        value={calculationType}
+        onChange={(e) => setCalculationType(e.target.value)}
+        className="ml-2 bg-blue-500 text-white border-none focus:outline-none"
+      >
+        <option value="monthly">Monthly</option>
+        <option value="annual">Annual</option>
+      </select>
+    </label>
+
+    {/* Year Dropdown */}
+    <label className="text-white whitespace-nowrap mr-2">
+      Year:
+      <select
+        value={selectedYear}
+        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+        className="ml-2 bg-transparent text-white border-none focus:outline-none"
+      >
+        {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+          <option key={year} value={year} className="bg-blue-500">
+            {year}
+          </option>
+        ))}
+      </select>
+    </label>
+
+    {/* Month Dropdown (only shown for monthly calculation) */}
+    {calculationType === "monthly" && (
+      <label className="text-white whitespace-nowrap mr-2">
+        Month:
+        <select
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+          className="ml-2 bg-transparent text-white border-none focus:outline-none"
+        >
+          {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+            <option key={month} value={month} className="bg-blue-500">
+              {new Date(0, month - 1).toLocaleString('default', { month: 'long' })}
+            </option>
+          ))}
+        </select>
+      </label>
+    )}
+
+    {/* Apply and Clear Buttons */}
+    <div className="flex gap-2">
+      <button
+        onClick={() => setIsFilterApplied(true)}
+        className="bg-white text-blue-500 py-1 px-3 rounded-md hover:bg-gray-100 transition-colors whitespace-nowrap"
+      >
+        Apply
+      </button>
+      <button
+        onClick={() => setIsFilterApplied(false)}
+        className="bg-white text-blue-500 py-1 px-3 rounded-md hover:bg-gray-100 transition-colors whitespace-nowrap"
+      >
+        Clear
+      </button>
+    </div>
+  </div>
+</div>
         {/* Main Content Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Customer Risk Analysis Section */}

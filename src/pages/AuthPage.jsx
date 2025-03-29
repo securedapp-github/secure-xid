@@ -168,9 +168,7 @@ const Login = ({ toggleForm, onForgotPassword }) => {
       const response = await fetch(
         `${VITE_API_BASE_URL}/users/${userId}`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+         
         }
       );
       const data = await response.json();
@@ -202,24 +200,17 @@ const Login = ({ toggleForm, onForgotPassword }) => {
       if (response.ok) {
         toast.success("Login successful!");
         localStorage.setItem("authToken", data.token);
-        localStorage.setItem("userId", data.userId); // Store userId from login response
+        localStorage.setItem("userId", data.user_id); // Store user ID if needed
         
-        // Fetch user role after successful login
-        const userRole = await fetchUserRole(data.userId);
-        
-        if (userRole) {
-          // Delay navigation to allow the toast to be displayed
-          setTimeout(() => {
-            // Navigate based on user role
-            if (userRole === "admin") {
-              navigate("/admin-dashboard");
-            } else {
-              navigate("/kyc");
-            }
-          }, 2000); // 2000 milliseconds (2 seconds) delay
-        } else {
-          toast.error("Unable to determine user role");
-        }
+        // Delay navigation to allow the toast to be displayed
+        setTimeout(() => {
+          // Navigate based on is_admin value (1 for admin, 0 for regular user)
+          if (data.is_admin === 1) {
+            navigate("/admin-dashboard");
+          } else {
+            navigate("/kyc");
+          }
+        }, 2000); // 2000 milliseconds (2 seconds) delay
       } else {
         toast.error(data.message || "Login failed");
       }

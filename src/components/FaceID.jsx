@@ -222,7 +222,7 @@ const FaceId = ({ onBack, frontFile, backFile }) => {
               
               <h3 className="text-xl font-semibold mt-6 text-gray-800">KYC Submission Completed</h3>
               <p className="text-gray-600 mt-2 text-center">
-                Your documents have been successfully verified. You can now access all features.
+                Your documents have been successfully Submitted.
               </p>
             </div>
           </div>

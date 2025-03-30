@@ -64,11 +64,11 @@ const SelectDocument = ({ onNext }) => {
       
       if (selectedCountryObj) {
         // Save both code and name to localStorage
-        localStorage.setItem('selectedCountryCode', selectedCountryObj.code);
+      
         localStorage.setItem('selectedCountryName', selectedCountryObj.name);
         
         // Log to console
-        console.log('Selected country:', selectedCountryObj.name, '(', selectedCountryObj.code, ')');
+        console.log('Selected country:', selectedCountryObj.name,);
       }
       
       onNext();

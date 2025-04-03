@@ -34,7 +34,7 @@ const Signup = ({ toggleForm }) => {
 
     try {
      const response = await fetch(
-      `${VITE_API_BASE_URL}/signup`,
+      `${VITE_API_BASE_URL}/api/auth/signup`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -58,7 +58,7 @@ const Signup = ({ toggleForm }) => {
   const handleVerifyOtp = async () => {
     try {
       const response = await fetch(
-       `${VITE_API_BASE_URL}/verify-otp`,
+       `${VITE_API_BASE_URL}/api/auth/verify-otp`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -188,7 +188,7 @@ const Login = ({ toggleForm, onForgotPassword }) => {
     e.preventDefault();
     try {
       const response = await fetch(
-        `${VITE_API_BASE_URL}/login`,
+        `${VITE_API_BASE_URL}/api/auth/login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -275,7 +275,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
   const handleSendOtp = async () => {
     try {
       const response = await fetch(
-        `${VITE_API_BASE_URL}/login`,
+        `${VITE_API_BASE_URL}/api/auth/login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -306,7 +306,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
   
     try {
       const response = await fetch(
-        `${VITE_API_BASE_URL}/reset-password`,
+        `${VITE_API_BASE_URL}/api/auth/reset-password`,
         {
           method: "POST",
           headers: {

@@ -10,7 +10,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
   const handleSendOtp = async () => {
     try {
       const response = await fetch(
-       `${VITE_API_BASE_URL}/forgot-password`,
+       `${VITE_API_BASE_URL}/api/auth/forgot-password`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -34,7 +34,7 @@ const ForgotPassword = ({ onBackToLogin }) => {
   const handleVerifyOtp = async () => {
     try {
       const response = await fetch(
-       `${VITE_API_BASE_URL}/verify-otp`,
+       `${VITE_API_BASE_URL}/api/auth/verify-otp`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
